@@ -215,7 +215,7 @@ def get_output_folders():
     highest_run_index = 0
     for d in existing_dirs:
         match = re.search(r'\((\d+)\)', d) # Search for a number in parentheses
-        print(f"Directory: {d}")  # Print the current directory name
+        print(f"Directory: {d}")           # Print the current directory name
         if match:
             print(f"Match: {match.group(1)}")  # 4. Print the current match
             highest_run_index = max(highest_run_index, int(match.group(1)))
