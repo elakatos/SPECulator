@@ -187,6 +187,8 @@ def get_random_position_in_gene(posingene, transcript, triplet):
 
 #region Output
 
+#TODO cleanup when working
+
 # Function to write output directories
 def get_output_folders():
     """
@@ -202,6 +204,7 @@ def get_output_folders():
     print(f"Current working directory: {os.getcwd()}")
     print(f"Today's date (formatted): {today}")
     print(f"All directories: {os.listdir('.')}")
+    
     #### output index #####
     
     # Get a list of all directories that start with the date string
@@ -211,14 +214,14 @@ def get_output_folders():
     # Find the highest run index among the existing directories
     highest_run_index = 0
     for d in existing_dirs:
-        match = re.search(r'(\d+)$', d)  # Searches for a number at the end of the string - Using regular expressions
-        print(f"Directory: {d}")  # 4. Print the current directory name
+        match = re.search(r'\((\d+)\)', d) # Search for a number in parentheses
+        print(f"Directory: {d}")  # Print the current directory name
         if match:
             print(f"Match: {match.group(1)}")  # 4. Print the current match
             highest_run_index = max(highest_run_index, int(match.group(1)))
     
     # output directories paths
-    output_directories = f"output/output_{today}_{highest_run_index + 1}_{fasta_name}_{signature_name}_n{n_value}/"
+    output_directories = f"output/output_{today}_({highest_run_index + 1})_{fasta_name}_{signature_name}_n{n_value}/"
     print(f"Output directories: {output_directories}")
     
     return output_directories
