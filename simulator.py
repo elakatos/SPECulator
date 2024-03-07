@@ -200,9 +200,23 @@ def get_output_folders():
     signature_name = args['f'].split('/')[-1].split('.')[0]   # may have to change if adding standard signatures
     n_value = str(args['n'])
     
+    #### output index #####
+    
+    # Get a list of all directories that start with the date string
+    existing_dirs = [d for d in os.listdir() if os.path.isdir(d) and d.startswith(today)]
+    
+    # Find the highest run index among the existing directories
+    highest_run_index = 0
+    for d in existing_dirs:
+        match = re.search(r'(\d+)$', d)  # Look for one or more digits at the end of the directory name
+        if match:
+            run_index = int(match.group(1))
+            highest_run_index = max(highest_run_index, run_index)
+    
+    # output directories paths
     output_directories = (
     f"output/"
-    f"{today}_{fasta_name}_{signature_name}_n{n_value}_/"              # output folder for run
+    f"{today}_{highest_run_index + 1}_{fasta_name}_{signature_name}_n{n_value}_/"              # output folder for run
     )
     
     return output_directories
