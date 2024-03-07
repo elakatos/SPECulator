@@ -328,3 +328,5 @@ if __name__ == "__main__":                             # Checks if the script is
             
             # Output to file
             write_output(output_string,directories)
+            
+# Test upload new output indexing
