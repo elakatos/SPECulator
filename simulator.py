@@ -8,11 +8,10 @@ from Bio import SeqIO                    # Biopython library for handling FASTA 
 import numpy as np                       # Library for numerical computing
 from datetime import date                # Library for handling dates
 import os                                # Library for interacting with the operating system
-
-
-#TODO use or remove the following libraries
-
 import re                                # Library for regular expressions
+
+#TODO use or remove the following library
+
 import sys                               # Library for system-specific parameters and functions
 
 
@@ -200,24 +199,27 @@ def get_output_folders():
     signature_name = args['f'].split('/')[-1].split('.')[0]   # may have to change if adding standard signatures
     n_value = str(args['n'])
     
+    print(f"Current working directory: {os.getcwd()}")
+    print(f"Today's date (formatted): {today}")
+    print(f"All directories: {os.listdir('.')}")
     #### output index #####
     
     # Get a list of all directories that start with the date string
-    existing_dirs = [d for d in os.listdir() if os.path.isdir(d) and d.startswith(today)]
+    existing_dirs = [d for d in os.listdir('./output') if d.startswith('output_' + today)]
+    print(f"Existing directories: {existing_dirs}")
     
     # Find the highest run index among the existing directories
     highest_run_index = 0
     for d in existing_dirs:
-        match = re.search(r'(\d+)$', d)  # Look for one or more digits at the end of the directory name
+        match = re.search(r'(\d+)$', d)  # Searches for a number at the end of the string - Using regular expressions
+        print(f"Directory: {d}")  # 4. Print the current directory name
         if match:
-            run_index = int(match.group(1))
-            highest_run_index = max(highest_run_index, run_index)
+            print(f"Match: {match.group(1)}")  # 4. Print the current match
+            highest_run_index = max(highest_run_index, int(match.group(1)))
     
     # output directories paths
-    output_directories = (
-    f"output/"
-    f"{today}_{highest_run_index + 1}_{fasta_name}_{signature_name}_n{n_value}_/"              # output folder for run
-    )
+    output_directories = f"output/output_{today}_{highest_run_index + 1}_{fasta_name}_{signature_name}_n{n_value}/"
+    print(f"Output directories: {output_directories}")
     
     return output_directories
 
