@@ -323,10 +323,9 @@ if __name__ == "__main__":                             # Checks if the script is
             
             # Output the result to screen
             ch = sub.split("/")              # split() splits the string at the slash and saves into a list. The parts are unpacked into the variables ch[0] and ch[1]. If sub was a string like "A/B", then ch would become the list ['A', 'B'].
-            output_string = f"{selected_transcript}:c.{position}{ch[0]}>{ch[1]}"
+            output_string = f"{selected_transcript}:c.{position + 1}{ch[0]}>{ch[1]}"
             print(output_string)             # The printed string will have the format "selected_transcript:c.positionch[0]>ch[1]". If selected_transcript was "transcript1", position was 123, and ch was ['A', 'B'], the printed string would be "transcript1:c.123A>B"
             
             # Output to file
             write_output(output_string,directories)
             
-# Test upload new output indexing
