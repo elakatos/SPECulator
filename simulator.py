@@ -49,16 +49,16 @@ def read_fasta(fasta_file):
     sequences = {}
     for record in SeqIO.parse(fasta_file, "fasta"):    # SeqIO.parse() reads FASTA
         sequences[record.id] = str(record.seq)         # Adds the ID and sequence to the dictionary
-    return sequences
+    return sequences                                   # Example output: {'sequenceID': 'ATGCGACTGATCGATCGTACG',}
 
 #endregion
+
 
 
 # ====================
 # FREQUENCY OPERATIONS
 # ====================
 
-#TODO Split these ones up into several blocks
 
 #region Frequency
 
@@ -75,20 +75,20 @@ def get_freq(profile_file):
         for line in file:
             
             # triplet, change, count = The splited lines is assigned to these variables in order.
-            triplet, change, count = line.strip().split('\t')      # split('\t') splits the line where it finds a tab into a list of strings
+            triplet, change, count = line.strip().split('\t')      # Separates the three columns in the count file at "tab" and saves it to its respective variable 
             
             count = int(count)                                     # Converts the count string to an integer
-            if triplet not in freq:                                # Checking if triplet is not in the dictionary
+            if triplet not in freq:                                # Checking if triplet is not in the dictionary - Might seem unecessary since each triplet should only occur once can prevent errors if the count files are wrong
                 freq[triplet] = {}                                 # If not, creates a new dictionary for the triplet as value
-                
+                                                        # output example: {'CGA': {}} - The empty dictionary will be "change" 
             freq[triplet][change] = {'count': count}               # Adds new key-value pair to the dictionary
-            total_count += count
+            total_count += count                        # output example: {'CGA': {'G/A': {'count': 10}}} - Triple nested dictionary
             
     # Calculating frequencies
-    for triplet in freq:                                           # triplet is the key of the dictionary
-        for change in freq[triplet]:                               # change is the key of the dictionary (value = triplet)
+    for triplet in freq:                                           # Iterates over the triplets in the dictionary               
+        for change in freq[triplet]:     #TODO This is unecessary since there should only be one change per triplet
             freq[triplet][change]['freq'] = freq[triplet][change]['count'] / total_count   # Calculates the frequency of the change and adds it to the dictionary
-            
+                                                        # output example: {'CGA': {'G/A': {'count': 10, 'freq': 0.1}}}
     return freq
 
 
@@ -100,25 +100,28 @@ def calculate_triplet_counts(sequences):
     Returns dictionaries containing triplet counts and probabilities.
     """
     
-    triplet_count = {}  # Store triplet counts
-    gene_length = {}    # Store gene lengths
-    pos_in_gene = {}    # Store positions in genes
-    counting = {}       # Store counting of triplets
+    gene_length = {}
+    triplet_count = {}  
+    pos_in_gene = {}    
+    counting = {}       
     
-    for transcript, sequence in sequences.items():                         # Iterates over the sequences
-        gene_length[transcript] = len(sequence)                            # Adds the length of the sequence to the dictionary
-        triplets = [sequence[i:i+3] for i in range(len(sequence) - 2)]     # Creates a list of triplets from the sequence
+    # Iterate sequences dictionary extracted from FASTA transcripts        Example:     {'sequenceID': 'ATGCGACTGATCGATCGTACG',}
+    for transcript, sequence in sequences.items():                         # Iterates over the sequences dicrionary input
+        gene_length[transcript] = len(sequence)                            # Adds the length of the sequence to the dictionary as value, ex: {'sequenceID': 21}
+        triplets = [sequence[i:i+3] for i in range(len(sequence) - 2)]     # Creates a list of triplets from the sequence. [i:i+3] is the slice of the sequence.
+                                                                        # -2 since it is triplets so lenght is two less than the full sequence. [i:i+3] gives 3 positions. 
+        # Count triplets (per transcript and total), triplet frequencies (per transcript), store positions of triplets
         count = {}
-        for i, triplet in enumerate(triplets):                                         # Iterates over the triplets
-            count[triplet] = count.get(triplet, 0) + 1                                 # Adds the triplet to the dictionary and counts it. If in the dictionary, adds 1 to the count. If not, adds the triplet to the dictionary count 1.
-            pos_in_gene.setdefault(transcript, {}).setdefault(triplet, []).append(i)   # Adds the position of the triplet in the gene to the dictionary
-            
-        triplet_count[transcript] = {triplet: {'count': c, 'freq': c/(len(sequence)-2)} for triplet, c in count.items()}    # Adds the triplet count and frequency to the dictionary
-        
+        for i, triplet in enumerate(triplets):                                         # Iterates over the triplets. enumerate() function is used to get both the index (i) and the value (triplet) of each element.
+            count[triplet] = count.get(triplet, 0) + 1                                 # counting the occurrences of each triplet. The get() method of the dictionary is used to retrieve the current count of the triplet (or 0 if the triplet is not yet in the dictionary), and then 1 is added to this count. The result is then stored back in the count dictionary with the triplet as the key.
+            pos_in_gene.setdefault(transcript, {}).setdefault(triplet, []).append(i)   # Adds the position of the triplet in the gene to the dictionary. This line is storing the positions of each triplet in the pos_in_gene dictionary. The setdefault() method is used to ensure that there is a dictionary for each transcript and a list for each triplet. The index i is then appended to the list of positions for the triplet. The index i is then appended to the list of positions for the triplet. This results in a nested dictionary structure where the keys are the transcript values, each transcript maps to another dictionary where the keys are the triplet values, and each triplet maps to a list of positions.
+                        # example: {'transcript1': {'ATG': [0, 5, 10], 'TGC': [1, 6]}, 'transcript2': {'ATG': [0, 3, 7], 'TGC': [1]}}
+        triplet_count[transcript] = {triplet: {'count': c, 'freq': c/(len(sequence)-2)} for triplet, c in count.items()}    # Adds the triplet count and frequency to the dictionary. his line of code is creating a dictionary comprehension that maps each triplet to another dictionary. This inner dictionary contains two keys: 'count' and 'freq'.
+                        # example: {'transcript1': {'ATG': {'count': 3, 'freq': 0.3}, 'TGC': {'count': 2, 'freq': 0.2}}}
         for triplet in triplet_count[transcript]:                                                          # Iterates over the triplets in the dictionary
-            counting[triplet] = counting.get(triplet, 0) + triplet_count[transcript][triplet]['count']     # Adds the triplet to the counting dictionary and counts it. If in the dictionary, adds the count of the triplet. If not, adds the triplet to the dictionary count 1.
-            
-    return triplet_count, gene_length, pos_in_gene, counting               # Returns the dictionaries
+            counting[triplet] = counting.get(triplet, 0) + triplet_count[transcript][triplet]['count']     # Adds the triplet to the counting dictionary and counts it. If in the dictionary, adds the count of the triplet. If not, adds the triplet to the dictionary count 1. The overall effect of this loop is to calculate the total count of each triplet across all transcripts and store these counts in the counting dictionary.
+                        # example: {'ATG': 3, 'TGC': 2}
+    return triplet_count, gene_length, pos_in_gene, counting               
 
 
 
@@ -144,6 +147,8 @@ def calculate_probabilities(triplet_count, counting):   # Takes the previous dic
     return probabilities
 
 #endregion
+
+
 
 #TODO change name of Randomized...
 
