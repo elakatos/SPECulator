@@ -133,17 +133,18 @@ def calculate_probabilities(triplet_count, counting):   # Takes the previous dic
     """
     
     probabilities = {}
+    
     for transcript in triplet_count:
-        for triplet in triplet_count[transcript]:
-            prob = triplet_count[transcript][triplet]['count'] / counting[triplet]  # Calculates the probability of the triplet
-            triplet_count[transcript][triplet]['prob'] = prob                       # Adds the probability to the dictionary
-            
+        for triplet in triplet_count[transcript]:                                   # iterates the transcript in the first level and the triplet in the second level
+            prob = triplet_count[transcript][triplet]['count'] / counting[triplet]  # Calculates the probability of the triplet - Takes the transcript triplet count and divides it by the total count
+            triplet_count[transcript][triplet]['prob'] = prob                       # Adds the probability to the dictionary - This gives the probability of the triplet appearing in this specific transcript given its overall frequency in all transcripts.
+                        # Example: {'transcript1': {'triplet1': {'count': 10, 'freq': 0.5, 'prob': 0.2}}, 'transcript2': {'triplet1': {'count': 20, 'freq': 0.4, 'prob': 0.4}}}
             if triplet not in probabilities:                                        # If the triplet is not in the dictionary
-                probabilities[triplet] = {'name': [], 'prob': []}                   # Creates a new dictionary for the triplet
+                probabilities[triplet] = {'name': [], 'prob': []}                   # Creates a new dictionary for the triplet with two empty lists as values
                 
             probabilities[triplet]['name'].append(transcript)                       # Adds the transcript 
             probabilities[triplet]['prob'].append(prob)                             # Adds the probability
-            
+                        # Example: {'CGA': {'name': ['transcript1', 'transcript2'], 'prob': [0.2, 0.4]}}
     return probabilities
 
 #endregion
@@ -160,28 +161,34 @@ def calculate_probabilities(triplet_count, counting):   # Takes the previous dic
 
 # Function to perform random sampling based on frequencies
 def random_sampling(frequencies, n_sim):
+    """
+    Takes a dictionary of frequencies (freq) and performs random sampling (args=n times) based on these frequencies.
+    Returns a list of sampled elements.
+    """
     
     elements = []
     probs = []
     
-    for triplet in frequencies:
-        for change in frequencies[triplet]:
-            element = f"{triplet}_{change}"
-            elements.append(element)
-            probs.append(frequencies[triplet][change]['freq'])
-            
-    return np.random.choice(elements, size=n_sim, p=probs)
-
+    for triplet in frequencies:                                 # From get_freq() - # Example: {'CGA': {'G/A': {'count': 10, 'freq': 0.1}}}
+        for change in frequencies[triplet]:                     # Iterates over the substitutions (second level) in the dictionary
+            element = f"{triplet}_{change}"                     # Creates a string with the triplet and the substitution separated by an underscore
+            elements.append(element)                            # Adds the string to the elements list
+            probs.append(frequencies[triplet][change]['freq'])  # Adds the frequency to the probs list. This frequency will be used as the probability of selecting the corresponding element during the random sampling.
+                                # Examples: ['CGA_G/A', 'CGA_C/A'], [0.1, 0.2]
+    return np.random.choice(elements, size=n_sim, p=probs)      # This is an array of n_sim elements, each of which is a string from the elements list, selected randomly based on the probabilities in the probs list. The exact contents of the array will vary each time the function is called
+                                # Example: array(['CGA_G/A', 'CGA_G/A', 'CGA_C/A', ..., 'CGA_G/A', 'CGA_C/A', 'CGA_G/A'])
 
 
 # Function to get a random position in a gene
 def get_random_position_in_gene(posingene, transcript, triplet):
     """
-    Gets a random position in a gene for a given transcript and triplet.
+    Gets a random position in a gene for a given transcript and triplet. 
+    Returns a random position that will be mutated
     """
-    
-    positions = posingene[transcript][triplet]   
-    return random.choice(positions) + 1          
+    # This function returns a random position in a gene where a given triplet occurs in a given transcript.
+    # Input: pos_in_gene{} - {'transcript1': {'ATG': [0, 5, 10], 'TGC': [1, 6]}, 'transcript2': {'ATG': [0, 3, 7], 'TGC': [1]}}
+    positions = posingene[transcript][triplet]   # Retrieves the list of positions where the given triplet occurs in the given transcript from the dictionary.
+    return random.choice(positions) + 1          # A random position is selected from this list using the random.choice() function. +1 is added since the triplet start at the first base and it is the second that will be mutated. 
 
 #endregion
 
