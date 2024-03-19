@@ -37,7 +37,7 @@ def parse_arguments():
     
     args = parser.parse_args()                # Reads the command line arguments 
     return vars(args)                         # Returns the arguments as a dictionary
-
+            # output example: {'i': 'input.fasta', 'f': 'profile.txt', 'n': 100, 'r': 10}
 
 
 # Function to read a FASTA file and return sequences
@@ -199,7 +199,6 @@ def get_random_position_in_gene(posingene, transcript, triplet):
 
 #region Output
 
-#TODO cleanup when working
 
 # Function to write output directories
 def get_output_folders():
@@ -209,36 +208,31 @@ def get_output_folders():
     
     # Metadata for the output directory name
     today = date.today().strftime('%Y%m%d')                                
-    fasta_name = args['i'].split('/')[-1].split('.')[0]       # split('/')[-1] if  the file is given as a path. split('.')[0] returns the first part of the file name before the dot.
-    signature_name = args['f'].split('/')[-1].split('.')[0]   # may have to change if adding standard signatures
-    n_value = str(args['n'])
-    
-    print(f"Current working directory: {os.getcwd()}")
-    print(f"Today's date (formatted): {today}")
-    print(f"All directories: {os.listdir('.')}")
+    fasta_name = '.'.join(args['i'].split('/')[-1].split('.')[:-1])       # split('/')[-1] - Picks the string after the last "/". split('.')[:-1] and '.'.join() removes the file type and joins the string.
+    signature_name = '.'.join(args['f'].split('/')[-1].split('.')[:-1])   # may have to change if adding standard signatures.
+    n_value = str(args['n'])                                              # makes a string of the number of mutations argument.
     
     #### output index #####
     
     # Get a list of all directories that start with the date string
-    existing_dirs = [d for d in os.listdir('./output') if d.startswith('output_' + today)]
-    print(f"Existing directories: {existing_dirs}")
+    existing_dirs = [d for d in os.listdir('./output') if d.startswith('output_' + today)]  # Creates a new list of names of files and directories in ./output that start with 'output_' followed by today.
     
     # Find the highest run index among the existing directories
     highest_run_index = 0
+    
     for d in existing_dirs:
-        match = re.search(r'\((\d+)\)', d) # Search for a number in parentheses
-        print(f"Directory: {d}")           # Print the current directory name
+        match = re.search(r'\((\d+)\)', d) # From regular expressions, first argument = pattern, second argument = string to be searched. r'\((\d+)\)' is the pattern. \d+ is a regular expression pattern that matches one or more digits. The parentheses are used to capture the digits as a group. earches the string "d" for a pair of parentheses enclosing one or more digits
         if match:
-            print(f"Match: {match.group(1)}")  # 4. Print the current match
-            highest_run_index = max(highest_run_index, int(match.group(1)))
+            highest_run_index = max(highest_run_index, int(match.group(1))) # The group() method returns the part of the string where there was a match. The max() function is used to find the highest run index among the existing directories.
     
     # output directories paths
     output_directories = f"output/output_{today}_({highest_run_index + 1})_{fasta_name}_{signature_name}_n{n_value}/"
-    print(f"Output directories: {output_directories}")
     
     return output_directories
 
 
+
+#TODO change so it takes fasta_name and signature_name as arguments
 
 # Function to write output path
 def get_output_path(directories_paths, run_index):
@@ -246,13 +240,12 @@ def get_output_path(directories_paths, run_index):
     Returns the output path and sets file name with run index.
     """
     
-    # Metadata for file name                                 # may have to change: .split('.')[0]  -  if file names usually contains more than one dot
-    fasta_name = args['i'].split('/')[-1].split('.')[0]      # split('/')[-1] if  the file is given as a path. split('.')[0] returns the first part of the file name before the dot.
-    signature_name = args['f'].split('/')[-1].split('.')[0]  # may have to change if adding standard signatures
-    r_value = str(args['r'])
+    # Metadata for file name                                 
+    fasta_name = '.'.join(args['i'].split('/')[-1].split('.')[:-1])      
+    signature_name = '.'.join(args['f'].split('/')[-1].split('.')[:-1])  
+    r_value = str(args['r']) 
     
     # Output path
-    #TODO add index to output folder
     output_path = (                                                                                             
         f"{directories_paths}"                                            # output folder for run
         f"{fasta_name}_{signature_name}_{run_index}_of_{r_value}.txt"     # Run file.
@@ -294,44 +287,44 @@ def write_output(output, output_directories):
 # ====================
 
 
-if __name__ == "__main__":                             # Checks if the script is executed as the main program or imported as module
+if __name__ == "__main__":                             # Checks if the script is executed as the main program or imported as module. If the script is executed as the main program, the code block is executed, not if it is imported as a module.
     
     # Parse command-line arguments
-    args = parse_arguments()                           # Calls the function to parse command-line arguments
+    args = parse_arguments()                           # Calls the function to parse command-line arguments and return the arguments as a dictionary
     
     # Read input files and calculate frequencies
-    freq = get_freq(args['f'])                         # Calculate frequencies from mutational profile
-    sequences = read_fasta(args['i'])                  # Read FASTA file and return sequences
+    freq = get_freq(args['f'])                         # Calculate frequencies from mutational profile file and store in freq dictionary
+    sequences = read_fasta(args['i'])                  # Read FASTA file and return sequences as a dictionary of IDs and sequences 
     
     # Calculate triplet counts, gene lengths, and probabilities
     triplet_count, gene_length, pos_in_gene, counting = calculate_triplet_counts(sequences)   # The function returns 4 dictionaries
-    probabilities = calculate_probabilities(triplet_count, counting)
+    probabilities = calculate_probabilities(triplet_count, counting)                          # Calculate probabilities for each triplet in each transcript and store in probabilities dictionary 
     
     # Perform random sampling based on triplet frequencies
-    sampled_triplets = random_sampling(freq, args['n'])      # takes -n mutations as input
+    sampled_triplets = random_sampling(freq, args['n'])      # takes -n mutations as input. Returns a list of sampled elements.
     
     #Creating output directory
-    directories = get_output_folders()             # Returns the intended output directory path
-    os.makedirs(directories, exist_ok=True)        # Creates the output directories if they does not exist
+    directories = get_output_folders()             # Returns the intended output directory path as a string.
+    os.makedirs(directories, exist_ok=True)        # Creates the output directories if they do not exist already.
     
-    # Main simulation part: 
+    
+    #### Main simulation part ####: 
+    
     # iterating over sampled triplets and looping runs
-    for i in range(args['r']):                            # Run the simulation -r times. Numbers series created with range().
-        for run in sampled_triplets:                      # Each element in this list is a string representing a triplet and a substitution separated by an underscore "_"
-            trip, sub = run.split("_")                    # split() splits the string  at the underscore. The parts are unpacked into the variables trip (triplet) and sub (substitution) 
+    for i in range(args['r']):                            # Run the simulation -r times. Numbers series created with range(). The loop will run the number of times specified by the -r argument.
+        for run in sampled_triplets:                      # Each element in this list is a string representing a triplet and a substitution separated by an underscore "_". The loop iterates over these strings. 
+            trip, sub = run.split("_")                    # split() splits the string  at the underscore. The parts are unpacked into the variables trip (triplet) and sub (substitution). If run was a string like "CGA_G/A", then trip would become "CGA" and sub would become "G/A".
             
-            # probabilities is a dictionary containing information 
-            # about each triplet, including names and probabilities.
-            names = probabilities[trip]['name']                         # names is a list of transcripts
-            probs = probabilities[trip]['prob']                         # probs is a list of probabilities
+            # probabilities is a dictionary containing information about each triplet, including names and probabilities.
+            names = probabilities[trip]['name']           # names is a list of transcripts
+            probs = probabilities[trip]['prob']           # probs is a list of probabilities
             
+            #TODO isnt this already performed in a function?
             # Randomly select a transcript based on probabilities
-            selected_transcript = np.random.choice(names, p=probs)      # np.random.choice() returns a random transcript based on the probabilities. p=probs is the list of probabilities
+            selected_transcript = np.random.choice(names, p=probs)    # np.random.choice() returns a random transcript based on the probabilities. p=probs is the list of probabilities
             
             # Get a random position in the selected gene
             position = get_random_position_in_gene(pos_in_gene, selected_transcript, trip)   # Inside the function, it first retrieves the list of positions where the given triplet occurs in the given transcript from the posingene dictionary. Then it uses the random.choice() function to select a random position from this list.
-            
-            #TODO add output file (VCF format)
             
             # Output the result to screen
             ch = sub.split("/")              # split() splits the string at the slash and saves into a list. The parts are unpacked into the variables ch[0] and ch[1]. If sub was a string like "A/B", then ch would become the list ['A', 'B'].
