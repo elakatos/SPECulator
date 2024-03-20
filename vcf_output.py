@@ -16,9 +16,11 @@ import requests                     # requests is a Python library for making HT
 
 # Specify the transcript ID
 transcript_id = "ENST00000367800"
+#transcript_id_2 = "ENST00000327430"
+transcript_pos = 2
 
 # Function to retrieve the chromosome and start position of a transcript from the ENSEMBL REST API
-def get_chr_pos(transcript_id):
+def get_chr_pos(transcript_id, transcript_pos):
     """
     Retrieve the chromosome and start position of a transcript from the ENSEMBL REST API.
     """
@@ -39,35 +41,24 @@ def get_chr_pos(transcript_id):
         
         # Parse the JSON response
         data = response.json()      # function from the requests library to parse the JSON data
-        chr_info["chromosome"] = int(data['seq_region_name'])
+        chr_info["chromosome"] = data['seq_region_name']
         chr_info["start_pos"] = data['start']
         chr_info["end_pos"] = data['end']
+        
+        # Calculate chromosome position
+        chr_info["chr_pos"] = chr_info["start_pos"] + transcript_pos - 1
     else:
         print("Failed to retrieve data from Ensembl:", response.status_code)
         
+    
+        
     return chr_info
 
-transcript_info = get_chr_pos(transcript_id)  # Call the function with the specified transcript ID
-for key, value in transcript_info.items():
-    print(key, value)  # Print the chromosome and start position of the transcript
+# Test 
+if __name__ == "__main__":
+    transcript_info = get_chr_pos(transcript_id, transcript_pos)  # Call the function with the specified transcript ID
 
-print(transcript_info)
+    for key, value in transcript_info.items():
+        print(key, value)  # Print the chromosome and start position of the transcript
 
-
-
-#TODO better descriptions
-#TODO double check positions
-
-# Function to get mutated position
-def set_mutated_pos(start_pos, transcript_pos):
-    """
-    Setting position on chromosome
-    """
-    
-    mutated_pos = start_pos + transcript_pos - 1
-    return mutated_pos
-
-#Testing mutated mosition
-transcript_pos = 2
-mutated_pos = set_mutated_pos(transcript_info["start_pos"], transcript_pos)
-print("Mutated position:", mutated_pos)
+    print(transcript_info)

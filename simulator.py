@@ -1,19 +1,21 @@
 """Processing FASTA files and mutational profiles to simulate mutational signatures."""
 
 
-# Import Python libraries
+# Import built-in Python libraries
 import argparse                          # Library for parsing command-line arguments
 import random                            # Library for generating random numbers
-from Bio import SeqIO                    # Biopython library for handling FASTA files
-import numpy as np                       # Library for numerical computing
 from datetime import date                # Library for handling dates
 import os                                # Library for interacting with the operating system
 import re                                # Library for regular expressions
-
 #TODO use or remove the following library
-
 import sys                               # Library for system-specific parameters and functions
 
+# Import external libraries
+from Bio import SeqIO                    # Biopython library for handling FASTA files
+import numpy as np                       # Library for numerical computing
+
+# Import functions from other files
+from vcf_output import get_chr_pos       # Import the function get_chr_pos from the file vcf_output.py
 
 
 # ====================
@@ -334,3 +336,19 @@ if __name__ == "__main__":                             # Checks if the script is
             # Output to file
             write_output(output_string,directories)
             
+            # Retrieve chromosome and chromosome position from ENSEMBL
+            ensemble_info = get_chr_pos(selected_transcript, position+1)   # Calls the function get_chr_pos from the file vcf_output.py. The function retrieves the chromosome and start position of a transcript from the ENSEMBL REST API.
+            
+            #TODO delete test prints
+            
+            # TEST PRINTS
+            for key, value in ensemble_info.items():
+                print(key, value)
+                print("\n")
+                
+            # Test reverse strand positions
+            try:
+                if ensemble_info["start_pos"] > ensemble_info["end_pos"]:
+                    print("\nSmaller end position\n")
+            except KeyError as e:
+                print(f"KeyError: {e} does not exist in the dictionary")
