@@ -2,15 +2,15 @@
 Importing metadata and data from Ensembl database.
 """
 
-
 import requests                     # requests is a Python library for making HTTP requests
 
-
+# Todos to fix
 #TODO add more fix argumentparse for transcript ID
 #TODO Connect the files
 #TODO double check REF base
 #TODO remove end position
 #TODO add any other info?
+#TODO fix newline
 
 #### Accessing ENSEMBL online
 
@@ -30,6 +30,7 @@ def get_chr_pos(transcript_id, transcript_pos):
     url = "https://rest.ensembl.org"
     
     #TODO add argumentparse for transcript ID
+    #TODO loop through transcript id to find the newest version.
     # Construct the API request URL
     request_url = f"{url}/lookup/id/{transcript_id}?content-type=application/json"  # f-string is used to insert the transcript ID into the URL
     
@@ -48,17 +49,16 @@ def get_chr_pos(transcript_id, transcript_pos):
         # Calculate chromosome position
         chr_info["chr_pos"] = chr_info["start_pos"] + transcript_pos - 1
     else:
-        print("Failed to retrieve data from Ensembl:", response.status_code)
-        
-    
+        print("Failed to retrieve data from Ensembl:", response.status_code, "\n")
         
     return chr_info
+
 
 # Test 
 if __name__ == "__main__":
     transcript_info = get_chr_pos(transcript_id, transcript_pos)  # Call the function with the specified transcript ID
-
+    
     for key, value in transcript_info.items():
         print(key, value)  # Print the chromosome and start position of the transcript
-
+        
     print(transcript_info)

@@ -340,15 +340,16 @@ if __name__ == "__main__":                             # Checks if the script is
             ensemble_info = get_chr_pos(selected_transcript, position+1)   # Calls the function get_chr_pos from the file vcf_output.py. The function retrieves the chromosome and start position of a transcript from the ENSEMBL REST API.
             
             #TODO delete test prints
+            #TODO fix newlines
             
             # TEST PRINTS
             for key, value in ensemble_info.items():
                 print(key, value)
-                print("\n")
+            print("\n")
                 
             # Test reverse strand positions
             try:
                 if ensemble_info["start_pos"] > ensemble_info["end_pos"]:
                     print("\nSmaller end position\n")
             except KeyError as e:
-                print(f"KeyError: {e} does not exist in the dictionary")
+                print(f"KeyError: {e} does not exist in the dictionary\n")
