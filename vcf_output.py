@@ -24,18 +24,15 @@ def get_chr_pos(transcript_id, transcript_pos):
     """
     Retrieve the chromosome and start position of a transcript from the ENSEMBL REST API.
     """
+    
+    #TODO loop through transcript id to find the newest version.
+    
     chr_info = {}
     
-    # Define the ENSEMBL API endpoint
-    url = "https://rest.ensembl.org"
-    
-    #TODO add argumentparse for transcript ID
-    #TODO loop through transcript id to find the newest version.
-    # Construct the API request URL
-    request_url = f"{url}/lookup/id/{transcript_id}?content-type=application/json"  # f-string is used to insert the transcript ID into the URL
-    
     # Make the GET request to the ENSEMBL REST API
-    response = requests.get(request_url) # function from the requests library to retrieve data from the specified URL. Stored as raw data to make JSON.
+    request_url = f"{url}/lookup/id/{transcript_id}?content-type=application/json" # Construct the API request URL - f-string is used to insert the transcript ID into the URL
+    url = "https://rest.ensembl.org"                                               # Define the ENSEMBL API endpoint
+    response = requests.get(request_url)                                           # function from the requests library to retrieve data from the specified URL. Stored as raw data to make JSON.
     
     # Check if the request was successful
     if response.status_code == 200:              # 200 is the HTTP status code for a successful request
