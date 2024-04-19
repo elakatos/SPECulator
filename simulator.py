@@ -1,6 +1,8 @@
 """Processing FASTA files and mutational profiles to simulate mutational signatures."""
 
 
+#TODO import pickle to save and load dictionaries
+
 # Import built-in Python libraries
 import argparse                          # Library for parsing command-line arguments
 import random                            # Library for generating random numbers
@@ -93,7 +95,8 @@ def get_freq(profile_file):
                                                         # output example: {'CGA': {'G/A': {'count': 10, 'freq': 0.1}}}
     return freq
 
-
+#TODO Redo so It calculates probabilities and not saves freq.
+#TODO 
 
 # Function to calculate triplet counts and probabilities
 def calculate_triplet_counts(sequences):
@@ -331,7 +334,7 @@ if __name__ == "__main__":                             # Checks if the script is
             # Output the result to screen
             ch = sub.split("/")              # split() splits the string at the slash and saves into a list. The parts are unpacked into the variables ch[0] and ch[1]. If sub was a string like "A/B", then ch would become the list ['A', 'B'].
             output_string = f"{selected_transcript}:c.{position + 1}{ch[0]}>{ch[1]}"
-            print(output_string)             # The printed string will have the format "selected_transcript:c.positionch[0]>ch[1]". If selected_transcript was "transcript1", position was 123, and ch was ['A', 'B'], the printed string would be "transcript1:c.123A>B"
+            print(f"\n{output_string}")             # The printed string will have the format "selected_transcript:c.positionch[0]>ch[1]". If selected_transcript was "transcript1", position was 123, and ch was ['A', 'B'], the printed string would be "transcript1:c.123A>B"
             
             # Output to file
             write_output(output_string,directories)
@@ -345,7 +348,6 @@ if __name__ == "__main__":                             # Checks if the script is
             # TEST PRINTS
             for key, value in ensemble_info.items():
                 print(key, value)
-            print("\n")
                 
             # Test reverse strand positions
             try:
