@@ -1,1 +1,1 @@
-python3 simulator.py -i sample.fasta -f test_signature.counts -n 8 -r 6
+python3 simulator.py -t example_transcript_list.txt -f test_signature.counts -d transcript_db -n 8 -r 6
