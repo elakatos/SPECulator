@@ -57,7 +57,7 @@ def read_fasta_list(fasta_file):
     
     sequences = []
     for record in SeqIO.parse(fasta_file, "fasta"):
-        sequences.append(( (record.id.split('|')[0]).split('.')[0],str(record.seq)))
+        sequences.append(( ((record.id.split('|')[0]).split(' ')[0]).split('.')[0],str(record.seq)))
     return sequences                                   # Example output: [('ENSTxxx': 'ATGCGACTGATCGATCGTACG')]
 
 # Function to read a FASTA file and return sequences

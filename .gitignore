@@ -1,6 +1,7 @@
 # Files and directories to ignore
 output/
 large_fasta/
+transcript_db/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
