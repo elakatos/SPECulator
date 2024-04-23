@@ -1,17 +1,15 @@
 """Processing FASTA files and mutational profiles to simulate mutational signatures."""
 
 
-#TODO import pickle to save and load dictionaries
-
 # Import built-in Python libraries
 import argparse                          # Library for parsing command-line arguments
 import random                            # Library for generating random numbers
 from datetime import date                # Library for handling dates
 import os                                # Library for interacting with the operating system
 import re                                # Library for regular expressions
-#TODO use or remove the following library
+# TODO: use or remove the following library
 import sys                               # Library for system-specific parameters and functions
-import pickle
+import pickle                            # This library is particularly useful when you need to save complex Python data structures like lists, dictionaries, or class instances to a file that can be later retrieved
 
 # Import external libraries
 from Bio import SeqIO                    # Biopython library for handling FASTA files
@@ -19,7 +17,7 @@ import numpy as np                       # Library for numerical computing
 
 # Import functions from other files
 # TODO: fix typo! (now commented out as I don't have vcf)
-# from vfc_output import get_chr_pos       # Import the function get_chr_pos from the file vcf_output.py
+# from vfc_output import get_chr_pos       # Import the function accessing ensembl - from the file vcf_output.py
 
 
 # ====================
@@ -27,6 +25,7 @@ import numpy as np                       # Library for numerical computing
 # ====================
 
 #region Input
+
 
 # Function to parse command-line arguments
 def parse_arguments():
@@ -39,7 +38,7 @@ def parse_arguments():
     parser.add_argument('-i', required=False, help="FASTA transcript files")                     # Adds -i FASTA file
     parser.add_argument('-t', required=False, help="Transcript list (file)")                     # Adds -t transcript list file
     parser.add_argument('-d', required=True, help="Database folder with pre-processed transcript pkl files")      # Adds -d database folder
-    parser.add_argument('-c', required=False, help="Pre-processed transcript counts file")                     # Adds -c transcript counts file
+    parser.add_argument('-c', required=False, help="Pre-processed transcript counts file")                        # Adds -c transcript counts file
     parser.add_argument('-f', required=True, help="Mutational profile")                         # Adds -f signature file
     parser.add_argument('-n', type=int, required=True, help="Number of simulated mutations")    # Adds -n number of mutations
     parser.add_argument('-r', type=int, required=True, help="Number of runs")                   # Adds -r number of runs
@@ -47,7 +46,6 @@ def parse_arguments():
     args = parser.parse_args()                # Reads the command line arguments 
     return vars(args)                         # Returns the arguments as a dictionary
             # output example: {'i': 'input.fasta', 'f': 'profile.txt', 'n': 100, 'r': 10}
-
 
 # Function to read a FASTA file and return sequences
 def read_fasta_list(fasta_file):
@@ -69,6 +67,7 @@ def read_fasta(fasta_file):
     sequences = {}
     for record in SeqIO.parse(fasta_file, "fasta"):    # SeqIO.parse() reads FASTA
         sequences[record.id] = str(record.seq)         # Adds the ID and sequence to the dictionary
+        
     return sequences                                   # Example output: {'sequenceID': 'ATGCGACTGATCGATCGTACG',}
 
 def read_transcript_list(transcript_list_file):
@@ -79,7 +78,7 @@ def read_transcript_list(transcript_list_file):
     with open(transcript_list_file, "r") as list_in:
         lines = list_in.readlines()
     seqIDs = [(l.strip().split('|')[0]).split('.')[0] for l in lines] # processing to ignore .version and other info
-    return seqIDs
+    return seqIDs                                                     # example output: ['ENST000001', 'ENST000002']
 
 #endregion
 
@@ -118,11 +117,10 @@ def get_freq(profile_file):
     for triplet in freq:                                           # Iterates over the triplets in the dictionary               
         for change in freq[triplet]:     #TODO This is unecessary since there should only be one change per triplet
             freq[triplet][change]['freq'] = freq[triplet][change]['count'] / total_count   # Calculates the frequency of the change and adds it to the dictionary
-                                                        # output example: {'CGA': {'G/A': {'count': 10, 'freq': 0.1}}}
-    return freq
+            
+    return freq                           # output example: {'CGA': {'G/A': {'count': 10, 'freq': 0.1}}}
 
-#TODO Redo so It calculates probabilities and not saves freq.
-#TODO 
+# TODO: Redo so It calculates probabilities and not saves freq.
 
 # Function to calculate triplet counts and probabilities
 def calculate_triplet_counts(sequences):
@@ -147,12 +145,13 @@ def calculate_triplet_counts(sequences):
             count[triplet] = count.get(triplet, 0) + 1                                 # counting the occurrences of each triplet. The get() method of the dictionary is used to retrieve the current count of the triplet (or 0 if the triplet is not yet in the dictionary), and then 1 is added to this count. The result is then stored back in the count dictionary with the triplet as the key.
             pos_in_gene.setdefault(transcript, {}).setdefault(triplet, []).append(i)   # Adds the position of the triplet in the gene to the dictionary. This line is storing the positions of each triplet in the pos_in_gene dictionary. The setdefault() method is used to ensure that there is a dictionary for each transcript and a list for each triplet. The index i is then appended to the list of positions for the triplet. The index i is then appended to the list of positions for the triplet. This results in a nested dictionary structure where the keys are the transcript values, each transcript maps to another dictionary where the keys are the triplet values, and each triplet maps to a list of positions.
                         # example: {'transcript1': {'ATG': [0, 5, 10], 'TGC': [1, 6]}, 'transcript2': {'ATG': [0, 3, 7], 'TGC': [1]}}
-        triplet_count[transcript] = {triplet: {'count': c, 'freq': c/(len(sequence)-2)} for triplet, c in count.items()}    # Adds the triplet count and frequency to the dictionary. his line of code is creating a dictionary comprehension that maps each triplet to another dictionary. This inner dictionary contains two keys: 'count' and 'freq'.
+        triplet_count[transcript] = {triplet: {'count': c, 'freq': c/(len(sequence)-2)} for triplet, c in count.items()}    # Adds the triplet count and frequency to the dictionary. This line of code is creating a dictionary comprehension that maps each triplet to another dictionary. This inner dictionary contains two keys: 'count' and 'freq'.
                         # example: {'transcript1': {'ATG': {'count': 3, 'freq': 0.3}, 'TGC': {'count': 2, 'freq': 0.2}}}
         for triplet in triplet_count[transcript]:                                                          # Iterates over the triplets in the dictionary
             counting[triplet] = counting.get(triplet, 0) + triplet_count[transcript][triplet]['count']     # Adds the triplet to the counting dictionary and counts it. If in the dictionary, adds the count of the triplet. If not, adds the triplet to the dictionary count 1. The overall effect of this loop is to calculate the total count of each triplet across all transcripts and store these counts in the counting dictionary.
                         # example: {'ATG': 3, 'TGC': 2}
     return triplet_count, gene_length, pos_in_gene, counting               
+
 
 def process_triplet_positions(sequences, db_folder, triplet_counts={}):
     """
@@ -162,20 +161,22 @@ def process_triplet_positions(sequences, db_folder, triplet_counts={}):
     Triplets counts can be supplied (if one wants to append to a previously computed dictionary) or started from empty
     """
     
-    for (transcript, sequence) in sequences:                         # Iterates over the sequences
+    for (transcript, sequence) in sequences:                               # Iterates over the sequences
         triplets = [sequence[i:i+3] for i in range(len(sequence) - 2)]     # Creates a list of triplets from the sequence
         count = {}
         pos_in_transcript = {}
+        
         for i, triplet in enumerate(triplets):                                         # Iterates over the triplets
             count[triplet] = count.get(triplet, 0) + 1                                 # Adds the triplet to the dictionary and counts it. If in the dictionary, adds 1 to the count. If not, adds the triplet to the dictionary count 1.
             pos_in_transcript.setdefault(triplet, []).append(i)                        # Adds the position of the triplet in the gene to the (transcript-specific) dictionary
         del triplets      # Delete triplets to help reduce memory usage
-        dbname = db_folder+'/'+transcript+'.pkl'
+        
+        dbname = db_folder+'/'+transcript+'.pkl'                                      # Used to construct a file path for a pickle file that is specific to each transcript.
         with open(dbname, 'wb') as saved_dict:
-            pickle.dump(pos_in_transcript, saved_dict, pickle.HIGHEST_PROTOCOL)       # Pickle the processed triplet positions dictionary using the highest protocol available.
+            pickle.dump(pos_in_transcript, saved_dict, pickle.HIGHEST_PROTOCOL)       # Pickle the processed triplet positions dictionary using the highest protocol available. pickle.HIGHEST_PROTOCOL is a constant that represents the highest protocol number available in your Python interpreter. Using the highest protocol allows you to pickle more kinds of Python objects
         [triplet_counts.setdefault(triplet, [[],[]])[1].append(c) for triplet, c in count.items()]  # Add triplet count info to total counts. If info on triplet does not exist yet, then initialises it as two lists
         [triplet_counts[triplet][0].append(transcript) for triplet in count.keys()]
-                    
+        
     return triplet_counts             # Returns one count dictionary
 
 def compute_triplet_counts(seqIDs, db_folder):
@@ -184,8 +185,8 @@ def compute_triplet_counts(seqIDs, db_folder):
     """
     triplet_counts={}    
     
-    for transcript in seqIDs:                         # Iterates over the sequences
-        with open(db_folder+'/'+transcript+'.pkl', 'rb') as read_db:
+    for transcript in seqIDs:                                              # Iterates over the sequences
+        with open(db_folder+'/'+transcript+'.pkl', 'rb') as read_db:       # Pathing together the file path for the pickle file that is specific to each transcript. Opens the pickle file in read mode. The 'r' stands for read mode, and the 'b' stands for binary mode. So 'rb' means the file is opened for reading in binary mode. This is typically used for non-text files like images or executable files, or in this case, pickle files.
             posingene = pickle.load(read_db)                               # Read pickled transcript dictionary
         [triplet_counts.setdefault(triplet, [[],[]])[1].append(len(pos)) for triplet, pos in posingene.items()]  # Add triplet count info to total counts. If info on triplet does not exist yet, then initialises it as two lists
         [triplet_counts[triplet][0].append(transcript) for triplet in posingene.keys()]
@@ -217,8 +218,6 @@ def calculate_probabilities(triplet_count, counting):   # Takes the previous dic
 #endregion
 
 
-
-#TODO change name of Randomized...
 
 # ====================
 # RANDOMIZED OPERATIONS
@@ -308,7 +307,7 @@ def get_output_folders(fasta_name):
 
 
 
-#TODO change so it takes fasta_name and signature_name as arguments
+# TODO: change so it takes fasta_name and signature_name as arguments
 
 # Function to write output path
 def get_output_path(directories_paths, run_index, fasta_name):
@@ -332,8 +331,8 @@ def get_output_path(directories_paths, run_index, fasta_name):
 
 # Function to write output to a file
 
-#TODO rewrite to VCF 
-#TODO remove intermediate
+# TODO: rewrite to VCF 
+# TODO: remove intermediate
 
 def write_output(output, output_directories, fasta_name):
     """
@@ -362,82 +361,83 @@ def write_output(output, output_directories, fasta_name):
 # ====================
 
 
-if __name__ == "__main__":                             # Checks if the script is executed as the main program or imported as module. If the script is executed as the main program, the code block is executed, not if it is imported as a module.
+if __name__ == "__main__":                                                  # Checks if the script is executed as the main program or imported as module. If the script is executed as the main program, the code block is executed, not if it is imported as a module.
     
     # Parse command-line arguments
-    args = parse_arguments()                           # Calls the function to parse command-line arguments and return the arguments as a dictionary
-    db_folder = args['d']      # Assign database folder to a variable    
+    args = parse_arguments()                                                # Calls the function to parse command-line arguments and return the arguments as a dictionary
+    db_folder = args['d']                                                   # Assign database folder to a variable    
+    # TODO: Check if db_folder exist, otherwise, create it.
     
     # Read input files and calculate frequencies
-    freq = get_freq(args['f'])                         # Calculate frequencies from mutational profile file and store in freq dictionary
-    if args['i'] is not None:  # if a fasta file is provided
-        sequences = read_fasta_list(args['i'])                  # Read FASTA file and return list of tuples of IDs and sequences
-        triplet_counts = process_triplet_positions(sequences, db_folder) # In this case new database is processed based on fasta
+    freq = get_freq(args['f'])                                              # Calculate frequencies from mutational profile file and store in freq dictionary
+    if args['i'] is not None:     # if a fasta file is provided
+        sequences = read_fasta_list(args['i'])                              # Read FASTA file and return list of tuples of IDs and sequences
+        triplet_counts = process_triplet_positions(sequences, db_folder)    # In this case new database is processed based on fasta
         run_name = '.'.join(args['i'].split('/')[-1].split('.')[:-1])       # split('/')[-1] - Picks the string after the last "/". split('.')[:-1] and '.'.join() removes the file type and joins the string.
     elif args['t'] is not None:   # if a list of transcripts is provided
         transcripts = read_transcript_list(args['t'])
         triplet_counts = compute_triplet_counts(transcripts, db_folder)
         run_name = '.'.join(args['t'].split('/')[-1].split('.')[:-1])       # split('/')[-1] - Picks the string after the last "/". split('.')[:-1] and '.'.join() removes the file type and joins the string.
-    else:   # use all entries in pre-processed count file
+    else:                         # use all entries in pre-processed count file
         with open(args['c'], 'rb') as read_db:     # Read in saved count file
             triplet_counts = pickle.load(read_db)
-    # TODO add checks for ensuring database and triplet_counts contain the same transcripts
+    # TODO: add checks for ensuring database and triplet_counts contain the same transcripts
     
     # Calculate triplet counts, gene lengths, and probabilities
-   # triplet_count, gene_length, pos_in_gene, counting = calculate_triplet_counts(sequences)   # The function returns 4 dictionaries
-   # probabilities = calculate_probabilities(triplet_count, counting)                          # Calculate probabilities for each triplet in each transcript and store in probabilities dictionary 
+    # triplet_count, gene_length, pos_in_gene, counting = calculate_triplet_counts(sequences)   # The function returns 4 dictionaries
+    # probabilities = calculate_probabilities(triplet_count, counting)                          # Calculate probabilities for each triplet in each transcript and store in probabilities dictionary 
     
     # Perform random sampling based on triplet frequencies
     sampled_triplets = random_sampling(freq, args['n'])      # takes -n mutations as input. Returns a list of sampled elements.
     
     #Creating output directory
     directories = get_output_folders(run_name)             # Returns the intended output directory path as a string.
-    os.makedirs(directories, exist_ok=True)        # Creates the output directories if they do not exist already.
+    os.makedirs(directories, exist_ok=True)                # Creates the output directories if they do not exist already.
     
     
     #### Main simulation part ####: 
     
-    # iterating over sampled triplets and looping runs
+    # Iterating over sampled triplets and looping runs
     for i in range(args['r']):                            # Run the simulation -r times. Numbers series created with range(). The loop will run the number of times specified by the -r argument.
         for run in sampled_triplets:                      # Each element in this list is a string representing a triplet and a substitution separated by an underscore "_". The loop iterates over these strings. 
             trip, sub = run.split("_")                    # split() splits the string  at the underscore. The parts are unpacked into the variables trip (triplet) and sub (substitution). If run was a string like "CGA_G/A", then trip would become "CGA" and sub would become "G/A".
             
             # probabilities is a dictionary containing information about each triplet, including names and probabilities.
-           # names = probabilities[trip]['name']           # names is a list of transcripts
-           # probs = probabilities[trip]['prob']           # probs is a list of probabilities
+            # names = probabilities[trip]['name']         # names is a list of transcripts
+            # probs = probabilities[trip]['prob']         # probs is a list of probabilities
             names = triplet_counts[trip][0]
-            counts = triplet_counts[trip][1] # counts are used as weights to not have to compute probabilities (faster)
+            counts = triplet_counts[trip][1]              # counts are used as weights to not have to compute probabilities (faster)
             
-            #TODO isnt this already performed in a function?
+            # TODO: isnt this already performed in a function?
             # Randomly select a transcript based on probabilities
-           # selected_transcript = np.random.choice(names, p=probs)    # np.random.choice() returns a random transcript based on the probabilities. p=probs is the list of probabilities
+            # selected_transcript = np.random.choice(names, p=probs)       # np.random.choice() returns a random transcript based on the probabilities. p=probs is the list of probabilities
             selected_transcript = random.choices(names, weights=counts)[0] # using random.choices (since faster), returns a randomly selected one weighted by the number of times each transcript has the triplet
             
             # Get a random position in the selected gene
-           # position = get_random_position_in_gene(pos_in_gene, selected_transcript, trip)   # Inside the function, it first retrieves the list of positions where the given triplet occurs in the given transcript from the posingene dictionary. Then it uses the random.choice() function to select a random position from this list.
-            position = get_transcript_position(selected_transcript, trip, db_folder) # Reads in the corresponding transcript dictionary file, and chooses a random position where that triplet can be found
+            # position = get_random_position_in_gene(pos_in_gene, selected_transcript, trip)   # Inside the function, it first retrieves the list of positions where the given triplet occurs in the given transcript from the posingene dictionary. Then it uses the random.choice() function to select a random position from this list.
+            position = get_transcript_position(selected_transcript, trip, db_folder)           # Reads in the corresponding transcript dictionary file, and chooses a random position where that triplet can be found
             
             # Output the result to screen
-            ch = sub.split("/")              # split() splits the string at the slash and saves into a list. The parts are unpacked into the variables ch[0] and ch[1]. If sub was a string like "A/B", then ch would become the list ['A', 'B'].
+            ch = sub.split("/")                          # split() splits the string at the slash and saves into a list. The parts are unpacked into the variables ch[0] and ch[1]. If sub was a string like "A/B", then ch would become the list ['A', 'B'].
             output_string = f"{selected_transcript}:c.{position + 1}{ch[0]}>{ch[1]}"
-            print(f"\n{output_string}")             # The printed string will have the format "selected_transcript:c.positionch[0]>ch[1]". If selected_transcript was "transcript1", position was 123, and ch was ['A', 'B'], the printed string would be "transcript1:c.123A>B"
+            print(f"\n{output_string}")                  # The printed string will have the format "selected_transcript:c.positionch[0]>ch[1]". If selected_transcript was "transcript1", position was 123, and ch was ['A', 'B'], the printed string would be "transcript1:c.123A>B"
             
             # Output to file
             write_output(output_string,directories, run_name)
             
             # Retrieve chromosome and chromosome position from ENSEMBL
-          #  ensemble_info = get_chr_pos(selected_transcript, position+1)   # Calls the function get_chr_pos from the file vcf_output.py. The function retrieves the chromosome and start position of a transcript from the ENSEMBL REST API.
+            # ensemble_info = get_chr_pos(selected_transcript, position+1)   # Calls the function get_chr_pos from the file vcf_output.py. The function retrieves the chromosome and start position of a transcript from the ENSEMBL REST API.
             
-            #TODO delete test prints
-            #TODO fix newlines
+            # TODO: delete test prints
+            # TODO: fix newlines
             
             # TEST PRINTS
-           # for key, value in ensemble_info.items():
-           #     print(key, value)
-                
+            # for key, value in ensemble_info.items():
+            #     print(key, value)
+            
             # Test reverse strand positions
-           # try:
-           #     if ensemble_info["start_pos"] > ensemble_info["end_pos"]:
-           #         print("\nSmaller end position\n")
-           # except KeyError as e:
-           #     print(f"KeyError: {e} does not exist in the dictionary\n")
+            # try:
+            #     if ensemble_info["start_pos"] > ensemble_info["end_pos"]:
+            #         print("\nSmaller end position\n")
+            # except KeyError as e:
+            #     print(f"KeyError: {e} does not exist in the dictionary\n")
