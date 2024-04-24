@@ -27,7 +27,7 @@ import json
 
 ### HGVS notations ###
 
-#WORKS
+# WORKS:
 
 #hgvs_notation = "ENST00000560442:c.822C>T"
 #hgvs_notation = "ENST00000169551:c.609G>A"
@@ -38,13 +38,15 @@ import json
 #hgvs_notation = "ENST00000169551:c.37G>A"
 #hgvs_notation = "ENST00000635950:c.1004C>T"
 
-#DOESNT WORK
+
+# DOESNT WORK:
 
 #hgvs_notation = "ENST00000558353:c.323G>A"
 #hgvs_notation = "ENST00000431539:c.757C>T"
 
-hgvs_notation = "ENST00000558353:c.323G>A"
 
+# Variables
+hgvs_notation = "ENST00000169551:c.609G>A"
 url = "https://rest.ensembl.org/variant_recoder/homo_sapiens"
 headers = {"Content-Type": "application/json", "Accept": "application/json"}
 data = json.dumps({"ids": [hgvs_notation]})
@@ -53,7 +55,7 @@ data = json.dumps({"ids": [hgvs_notation]})
 response = requests.post(url, headers=headers, data=data)
 
 def get_hgvsg():
-    """Uses hgvs-coding to get hgvs-genomic"""
+    """Uses HGVS-coding to get HGVS-genomic"""
     
     # Check if the request was successful
     if response.status_code == 200:
@@ -61,6 +63,7 @@ def get_hgvsg():
         # Parse the response JSON
         result = response.json()
         print(json.dumps(result, indent=2))
+        
     else:
         print(f"Failed to retrieve data: {response.status_code}")
         print(response.text)
