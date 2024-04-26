@@ -41,23 +41,35 @@ import json
 #hgvs_notation = "ENST00000558353:c.323G>A"
 #hgvs_notation = "ENST00000431539:c.757C>T"
 
+# X and Y chromosomes
+
 
 # Variables
-hgvs_notation = "ENST00000169551:c.609G>A"
+#hgvs_notation = ["ENST00000169551:c.609G>A"]
+hgvs_notation = ["ENST00000169551:c.609G>A", "ENST00000560442:c.822C>T"]         # 2 working
+
+
 url = "https://rest.ensembl.org/variant_recoder/homo_sapiens"
 headers = {"Content-Type": "application/json", "Accept": "application/json"}
-data = json.dumps({"ids": [hgvs_notation]})
+data = json.dumps({"ids": hgvs_notation})
 
 # Send a POST request
 response = requests.post(url, headers=headers, data=data)
 
-# TODO: Change so user inputs ID
+# TODO: Change so user inputs ID                              - Last
+# TODO: Do I need a control step for HGVS coding sequence?    - Last
+# TODO: Is it possible to exclude all unecessary information  - Last
+#           right from the beginning to save time?
+# TODO: Install local DB?                                     - Last
+
+
 # TODO: Double check list of IDs
-# TODO: Do I need a control step for HGVS coding sequence?
-# TODO: Is it possible to exclude all unecessary information right from the beginning to save time?
-# TODO: Install local DB?
-# TODO: Integrate with main program
+#           - Multiple working
+#               - So far only returns LAST GENOMIC
+#           - Does it cancel if list contains not working?
+# TODO: Kolla nummer för XY
 # TODO: Transform HGVS genomic to relevant data.
+# TODO: Integrate with main program
 
 def get_hgvsg():
     """Extracts and prints HGVS genomic (HGVSG) corresponding to the input HGVS coding (HGVSC)."""
@@ -70,15 +82,19 @@ def get_hgvsg():
         for allele_result in result:
             for _, variant_data in allele_result.items():
                 
+                
+                
                 # Check for both 'hgvsc' and 'hgvsg' in the variant details
                 if 'hgvsc' in variant_data and 'hgvsg' in variant_data:
                     
-                    # Modify input notation for comparison without version number
-                    base_hgvs_coding = hgvs_notation.split(':')[0].split('.')[0]
-                    
-                    # Check if the input HGVS coding matches any returned HGVSC values (ignoring version)
-                    if any(base_hgvs_coding in s.split(':')[0].split('.')[0] for s in variant_data['hgvsc']):
-                        print(f"HGVS genomic (HGVSG): {variant_data['hgvsg'][0]}")  # Assuming only one HGVSG is returned
+                    for hgvs in hgvs_notation:
+                        
+                        # Modify input notation for comparison without version number
+                        base_hgvs_coding = hgvs.split(':')[0].split('.')[0]
+                        
+                        # Check if the input HGVS coding matches any returned HGVSC values (ignoring version)
+                        if any(base_hgvs_coding in s.split(':')[0].split('.')[0] for s in variant_data['hgvsc']):
+                            print(f"HGVS genomic (HGVSG): {variant_data['hgvsg'][0]}")  # Assuming only one HGVSG is returned
                         
                         return
                     
