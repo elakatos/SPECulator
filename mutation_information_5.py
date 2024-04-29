@@ -45,12 +45,12 @@ import json
 
 
 # Variables
-hgvs_notation = ["ENST00000558353:c.323G>A"]
+#hgvs_notation = ["ENST00000558353:c.323G>A"]
 #hgvs_notation = ["ENST00000169551:c.609G>A", "ENST00000560442:c.822C>T"]        #  2 working
 #hgvs_notation = ["ENST00000169551:c.609G>A", "ENST00000558353:c.323G>A"]        #  1 working and 2 not 
 #hgvs_notation = ["ENST00000558353:c.323G>A", "ENST00000169551:c.609G>A"]         #  1 not and 2 working
 #hgvs_notation = ["ENST00000169551:c.609G>A", "ENST00000558353:c.323G>A", "ENST00000519026:c.1396G>A"]     # 1 working 2 not 3 working
-#hgvs_notation = ["ENST00000169551:c.609G>A", "ENST00000558353:c.323G>A", "ENST00000519026:c.1396G>A", "ENST00000431539:c.757C>T"]   # 1 working 2 not 3 working 4 not
+hgvs_notation = ["ENST00000169551:c.609G>A", "ENST00000558353:c.323G>A", "ENST00000519026:c.1396G>A", "ENST00000431539:c.757C>T"]   # 1 working 2 not 3 working 4 not
 
 
 
@@ -61,7 +61,7 @@ hgvs_notation = ["ENST00000558353:c.323G>A"]
 # TODO: Add so that if reference base not matching,           - Last
 #           change the reference to input base?
 
-
+# TODO: Doesnt work if only 1 input and that one fails.
 # TODO: Double check list of coding IDs
 #               - Working successfully saved in dictionary
 #                        - ONLY 1 "NOT WORKING" registered
@@ -73,8 +73,12 @@ hgvs_notation = ["ENST00000558353:c.323G>A"]
 # TODO: Integrate with main program
 
 # TODO: Cleanup function especially prints
+# TODO: Bryt ut i flera funktioner
+
 def get_hgvs_genomic(hgvs_input):
-    """Extracts and HGVS genomic (HGVSG) corresponding to the input HGVS coding (HGVSC)."""
+    """
+    Extracts and HGVS genomic (HGVSG) corresponding to the input HGVS coding (HGVSC).
+    """
     
     # TODO: shouold these be in the function? main program file?
     # Ensembl REST API (variant_recorder)
@@ -98,15 +102,16 @@ def get_hgvs_genomic(hgvs_input):
         #### Iterate over each HGVS coding  ####
         found_match = False                                                          # Flag for matching HGVS coding
         
-        for allele_result in result:                                                 # List of dictionaries
-            for _, variant_data in allele_result.items():                            # Iterate over each dictionary in the list
+        for i, allele_result in enumerate(result):         # Enumerate adds index "i" to the object
+            for _, variant_data in allele_result.items():  # Iterate over each dictionary in the list
                 
-                # Finds if the input HGVS coding that returnes an error
-                # TODO: it only returns the FIRST ERROR! Fix this
-                # TODO: Then add to dictionary
-                if type(variant_data) == list:                                      # Errors saved as lists, hits saved as dictionaries.
-                    for line in variant_data:
-                        print(line, "\n")
+                if type(variant_data) == list:  # Errors saved as lists, hits saved as dictionaries.
+                    
+                    # Add failed to dictionary
+                    hgvs_failed[hgvs_input[i]] = variant_data
+                    
+                    # Test for failed HGVS coding
+                    
                     
                 # Continues with successfull HGVS coding
                 else:
@@ -165,8 +170,8 @@ if __name__ == "__main__":
     print("\nHere starts the failed:\n")
     
     for key, values in hgvs_failed_test.items():
-        print(f"Key: {key}")
+        print(f"Key: {key}\n")
         for value in values:
-            print(f"Value: {value}")
+            print(f"Value: {value}\n")
 
 
