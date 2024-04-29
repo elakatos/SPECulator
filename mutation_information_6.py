@@ -5,7 +5,7 @@
 # Import modules
 import requests
 import json
-
+import re
 
 ### Example mutations ###
 
@@ -42,7 +42,19 @@ import json
 #hgvs_notation = "ENST00000431539:c.757C>T"
 
 # X and Y chromosomes
+#ENST00000603986:c.1050C>T
+#ENST00000603986:c.1223G>A
+#ENST00000603986:c.2005G>A
+#ENST00000603986:c.904C>T
+#ENST00000603986:c.10G>A
+#ENST00000603986:c.684G>A
+#ENST00000383070:c.55C>T
+#ENST00000603986:c.1621C>T
+#ENST00000603986:c.987T>C
+#ENST00000383070:c.217G>A
 
+# 2 first X, 2 last Y
+#hgvs_notation = ["ENST00000603986:c.1050C>T", "ENST00000603986:c.1223G>A", "ENST00000383070:c.55C>T", "ENST00000383070:c.217G>A"]
 
 # Variables
 #hgvs_notation = ["ENST00000558353:c.323G>A"]
@@ -50,8 +62,17 @@ import json
 #hgvs_notation = ["ENST00000169551:c.609G>A", "ENST00000558353:c.323G>A"]        #  1 working and 2 not 
 #hgvs_notation = ["ENST00000558353:c.323G>A", "ENST00000169551:c.609G>A"]         #  1 not and 2 working
 #hgvs_notation = ["ENST00000169551:c.609G>A", "ENST00000558353:c.323G>A", "ENST00000519026:c.1396G>A"]     # 1 working 2 not 3 working
-hgvs_notation = ["ENST00000169551:c.609G>A", "ENST00000558353:c.323G>A", "ENST00000519026:c.1396G>A", "ENST00000431539:c.757C>T"]   # 1 working 2 not 3 working 4 not
+#hgvs_notation = ["ENST00000169551:c.609G>A", "ENST00000558353:c.323G>A", "ENST00000519026:c.1396G>A", "ENST00000431539:c.757C>T"]   # 1 working 2 not 3 working 4 not
 
+#ENSG00000184831     x-transcript    APOO-gene
+#ENST00000603986.6   x-transcript    CCDC120-gene
+#ENST00000383070.2   y-transcript    SRY-gene
+
+# TODO: Format these correct
+#ENST00000603986:c.1050C>T, : NC_000023.11:g.49067337G>A    X
+#ENST00000603986:c.1223G>A, : NC_000023.11:g.49067337G>A    x
+#ENST00000383070:c.55C>T, : NC_000024.10:g.2787387C>T       Y
+#ENST00000383070:c.217G>A, : NC_000024.10:g.2787387C>T      Y
 
 
 # TODO: Do I need a control step for HGVS coding sequence?    - Last
@@ -73,7 +94,8 @@ hgvs_notation = ["ENST00000169551:c.609G>A", "ENST00000558353:c.323G>A", "ENST00
 
 
 ### Main coding to genomic - request ###
-
+# TODO: Fails to remove from list for the X and Y transcripts - Double for the X and Y -probably why
+# TODO: Change 23 to X and 24 to Y
 def get_hgvs_genomic(hgvs_input, url, headers):
     """
     Extracts and HGVS genomic (HGVSG) corresponding to the input HGVS coding (HGVSC).
@@ -115,6 +137,10 @@ def get_hgvs_genomic(hgvs_input, url, headers):
                             if any(base_hgvs_coding in s.split(':')[0].split('.')[0] for s in variant_data['hgvsc']):    # Check if any HGVSC matches
                                 
                                 hgvs_genomic[hgvs] = variant_data['hgvsg'][0]     # Save successfull genomic HGVS
+                                # TODO: The remove step fails for the X and Y transcripts
+                                # TODO: ALL X and Y are printed double times, probably the reason for the failed removal
+                                # TODO: Only fails when same transcript appears 2 times - Probably due to split of string -> Removes both with same transcript?
+                                print(f"hgvs to be removed: {hgvs}\n")
                                 hgvs_failed.remove(hgvs)                          # Remove successfull input from failed list
                                 
                                 found_match = True           
@@ -140,13 +166,29 @@ def failed_to_genomic(hgvs_failed, url, headers):
 
 
 # TODO: Double check numbers for XY
-# TODO: Transform HGVS genomic to relevant data.
+#           - X: 23  y: 24
+#           - saved as numebrs or XY?
+# TODO: Adding as a nested dictionary instead
 
 ### Genomic to mutation information ###
-#genomic_to_mut_info = {"ENST00000169551:c.609G>A": "NC_000018.10:g.74158243G>A"}
+genomic_test = {"ENST00000169551:c.609G>A": "NC_000018.10:g.74158243G>A"}
 
-def hgvs_converter(genomic_to_mut_info):
+def hgvs_converter(hgvs_genomic):
     """ Takes the HGVS dictionary as input and returns mutation information for VCF creation"""
+    chr_info = {}
+    
+    pattern = re.compile(r'(\d{2})\..*\.(\d+)[ATCGU]')      # Patterns for chromosome and locus
+    
+    for key, genomic in hgvs_genomic.items():
+        match = pattern.search(genomic)
+        if match:
+            chromosome = match.group(1).lstrip("0")         # lstrip() removes the potential "0" from the first position.
+            locus = match.group(2)
+            chr_info[key] = (chromosome, locus)
+        else:
+            print(f"No match found in: {genomic}")
+            
+    return chr_info
 
 
 
@@ -158,6 +200,13 @@ if __name__ == "__main__":
     # REST API URL and headers
     url = "https://rest.ensembl.org/variant_recoder/homo_sapiens"
     headers = {"Content-Type": "application/json", "Accept": "application/json"}
+    #hgvs_notation = ["ENST00000169551:c.609G>A", "ENST00000558353:c.323G>A", "ENST00000519026:c.1396G>A", "ENST00000431539:c.757C>T"]   # 1 working 2 not 3 working 4 not
+    
+    ###   These are X an Y - First does not work, second work    ###
+    
+    #hgvs_notation = ["ENST00000603986:c.1050C>T", "ENST00000603986:c.1223G>A", "ENST00000383070:c.55C>T", "ENST00000383070:c.217G>A"] # X and Y
+    hgvs_notation = ["ENST00000603986:c.1050C>T", "ENST00000383070:c.55C>T"] # X and Y
+    
     
     # Result objects (genomic in dict, failed in list)
     hgvs_genomic_test, hgvs_failed_test = get_hgvs_genomic(hgvs_notation, url, headers)
@@ -175,5 +224,18 @@ if __name__ == "__main__":
     # Print the failed HGVS coding
     for failed in hgvs_failed_test:
         print(f"Failed: {failed}")
+    
+    ### genomic hgvs -> chromosome info
+    genomic_test = {
+        "ENST00000169551:c.609G>A": "NC_000018.10:g.74158243G>A",
+        "ENST00000519026:c.1396G>A": "NC_000008.11:g.20145849C>T",
+        "ENST00000603986:c.1223G>A": "NC_000023.11:g.49067337G>A",  # X - chromosome
+        "ENST00000383070:c.55C>T": "NC_000024.10:g.2787387C>T",     # Y - chromosome
+        }
+    
+    chr_info = hgvs_converter(genomic_test)
+    
+    for key, value in chr_info.items():
+        print(f"key: {key}\nvalue: {value}")
 
 
