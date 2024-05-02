@@ -18,7 +18,7 @@ import numpy as np                       # Library for numerical computing
 # Import functions from other files
 # TODO: fix typo! (now commented out as I don't have vcf)
 # from vfc_output import get_chr_pos       # Import the function accessing ensembl - from the file vcf_output.py
-
+from ensembl_request import get_hgvs_genomic, hgvs_converter 
 
 # ====================
 # INPUT OPERATIONS 
@@ -399,6 +399,9 @@ if __name__ == "__main__":                                                  # Ch
     
     # Iterating over sampled triplets and looping runs
     for i in range(args['r']):                            # Run the simulation -r times. Numbers series created with range(). The loop will run the number of times specified by the -r argument.
+        
+        hgvsc_list = []                                   # Create an empty list to store the output strings
+        
         for run in sampled_triplets:                      # Each element in this list is a string representing a triplet and a substitution separated by an underscore "_". The loop iterates over these strings. 
             trip, sub = run.split("_")                    # split() splits the string  at the underscore. The parts are unpacked into the variables trip (triplet) and sub (substitution). If run was a string like "CGA_G/A", then trip would become "CGA" and sub would become "G/A".
             
@@ -420,24 +423,45 @@ if __name__ == "__main__":                                                  # Ch
             # Output the result to screen
             ch = sub.split("/")                          # split() splits the string at the slash and saves into a list. The parts are unpacked into the variables ch[0] and ch[1]. If sub was a string like "A/B", then ch would become the list ['A', 'B'].
             output_string = f"{selected_transcript}:c.{position + 1}{ch[0]}>{ch[1]}"
-            print(f"\n{output_string}")                  # The printed string will have the format "selected_transcript:c.positionch[0]>ch[1]". If selected_transcript was "transcript1", position was 123, and ch was ['A', 'B'], the printed string would be "transcript1:c.123A>B"
+            hgvsc_list.append(output_string)             # Append the output string to the list hgvsc_list
+            
+            #print(f"\n{output_string}")                  # The printed string will have the format "selected_transcript:c.positionch[0]>ch[1]". If selected_transcript was "transcript1", position was 123, and ch was ['A', 'B'], the printed string would be "transcript1:c.123A>B"
             
             # Output to file
             write_output(output_string,directories, run_name)
             
-            # Retrieve chromosome and chromosome position from ENSEMBL
-            # ensemble_info = get_chr_pos(selected_transcript, position+1)   # Calls the function get_chr_pos from the file vcf_output.py. The function retrieves the chromosome and start position of a transcript from the ENSEMBL REST API.
             
-            # TODO: delete test prints
-            # TODO: fix newlines
+        # TODO: Clean up all prints
+        # test for hgvsc_list
+        
+        #print("\nHGVSC test:\n")
+        #for hgvsc in hgvsc_list:
+            #print(hgvsc)
             
-            # TEST PRINTS
-            # for key, value in ensemble_info.items():
-            #     print(key, value)
+        #### Retrieve chromosome and chromosome position from ENSEMBL REST API ####
+        
+        url = "https://rest.ensembl.org/variant_recoder/homo_sapiens"
+        headers = {"Content-Type": "application/json", "Accept": "application/json"}
+        
+        hgvs_genomic, hgvs_failed = get_hgvs_genomic(hgvsc_list, url, headers)        # Calls the function to get the HGVS genomic notation from the REST API. The function returns 1 dictionary, 1 list: hgvs_genomic and hgvs_failed.
+        
+        #print("\nMatching coding-genomic:\n")
+        
+        # Print the successful HGVS coding
+        #for key, value in hgvs_genomic.items():
+            #print(f"coding: {key}, genomic: {value}")
             
-            # Test reverse strand positions
-            # try:
-            #     if ensemble_info["start_pos"] > ensemble_info["end_pos"]:
-            #         print("\nSmaller end position\n")
-            # except KeyError as e:
-            #     print(f"KeyError: {e} does not exist in the dictionary\n")
+        print("\nHere starts the failed:\n")
+        
+        # Print the failed HGVS coding
+        for failed in hgvs_failed:
+            print(f"Failed: {failed}")
+            
+        # Call the HGVS converter function
+        chr_info = hgvs_converter(hgvs_genomic)
+        
+        # Test prints for the chromosome information
+        #print("\nHere starts the chromosome information:\n")
+        
+        #for key, value in chr_info.items():
+            #print(f"key: {key}\nvalue: {value}")
