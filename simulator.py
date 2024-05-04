@@ -431,29 +431,16 @@ if __name__ == "__main__":                                                  # Ch
             write_output(output_string,directories, run_name)
             
             
-        # TODO: Clean up all prints
-        # test for hgvsc_list
-        
-        #print("\nHGVSC test:\n")
-        #for hgvsc in hgvsc_list:
-            #print(hgvsc)
-            
         #### Retrieve chromosome and chromosome position from ENSEMBL REST API ####
+        # TODO: Clean up all prints
         
         url = "https://rest.ensembl.org/variant_recoder/homo_sapiens"
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
         
         hgvs_genomic, hgvs_failed = get_hgvs_genomic(hgvsc_list, url, headers)        # Calls the function to get the HGVS genomic notation from the REST API. The function returns 1 dictionary, 1 list: hgvs_genomic and hgvs_failed.
         
-        #print("\nMatching coding-genomic:\n")
-        
-        # Print the successful HGVS coding
-        #for key, value in hgvs_genomic.items():
-            #print(f"coding: {key}, genomic: {value}")
-            
-        print("\nHere starts the failed:\n")
-        
         # Print the failed HGVS coding
+        print("\nHere starts the failed:\n")
         for failed in hgvs_failed:
             print(f"Failed: {failed}")
             
@@ -461,8 +448,8 @@ if __name__ == "__main__":                                                  # Ch
         chr_info = hgvs_converter(hgvs_genomic)
         
         # Test prints for the chromosome information
-        #print("\nHere starts the chromosome information:\n")
+        print("\nHere starts the chromosome information:\n")
         
-        #for key, value in chr_info.items():
-            #print(f"key: {key}\nvalue: {value}")
+        for key, value in chr_info.items():
+            print(f"key: {key} value: {value}")
         

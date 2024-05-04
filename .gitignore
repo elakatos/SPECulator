@@ -5,6 +5,7 @@ transcript_db/
 tests/
 output/intermediate.txt
 example_transcript_list_XY.txt
+testing_split_list.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
