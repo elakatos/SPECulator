@@ -363,10 +363,14 @@ def write_output(output, output_directories, fasta_name):
 
 if __name__ == "__main__":                                                  # Checks if the script is executed as the main program or imported as module. If the script is executed as the main program, the code block is executed, not if it is imported as a module.
     
+    print("Parse arguments")
+    
     # Parse command-line arguments
     args = parse_arguments()                                                # Calls the function to parse command-line arguments and return the arguments as a dictionary
     db_folder = args['d']                                                   # Assign database folder to a variable    
     # TODO: Check if db_folder exist, otherwise, create it.
+    
+    print("Read input files and calculate frequencies")
     
     # Read input files and calculate frequencies
     freq = get_freq(args['f'])                                              # Calculate frequencies from mutational profile file and store in freq dictionary
@@ -387,18 +391,26 @@ if __name__ == "__main__":                                                  # Ch
     # triplet_count, gene_length, pos_in_gene, counting = calculate_triplet_counts(sequences)   # The function returns 4 dictionaries
     # probabilities = calculate_probabilities(triplet_count, counting)                          # Calculate probabilities for each triplet in each transcript and store in probabilities dictionary 
     
+    print("Perform random sampling")
+    
     # Perform random sampling based on triplet frequencies
     sampled_triplets = random_sampling(freq, args['n'])      # takes -n mutations as input. Returns a list of sampled elements.
     
-    #Creating output directory
+    print("Create output directories")
+    
+    # Creating output directory
     directories = get_output_folders(run_name)             # Returns the intended output directory path as a string.
     os.makedirs(directories, exist_ok=True)                # Creates the output directories if they do not exist already.
     
     
     #### Main simulation part ####: 
     
+    print("Start simulation")
+    
     # Iterating over sampled triplets and looping runs
     for i in range(args['r']):                            # Run the simulation -r times. Numbers series created with range(). The loop will run the number of times specified by the -r argument.
+        
+        print("Simulate mutations")
         
         hgvsc_list = []                                   # Create an empty list to store the output strings
         
@@ -434,6 +446,8 @@ if __name__ == "__main__":                                                  # Ch
         #### Retrieve chromosome and chromosome position from ENSEMBL REST API ####
         # TODO: Clean up all prints
         
+        print("Access ensemble API")
+        
         url = "https://rest.ensembl.org/variant_recoder/homo_sapiens"
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
         
@@ -444,6 +458,8 @@ if __name__ == "__main__":                                                  # Ch
         for failed in hgvs_failed:
             print(f"Failed: {failed}")
             
+        print("Extract data for VCF")
+        
         # Call the HGVS converter function
         chr_info = hgvs_converter(hgvs_genomic)
         
