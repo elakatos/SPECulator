@@ -1,11 +1,15 @@
 ##fileformat=VCFv4.2
-##source=MutationSimulator
-##contig=<ID=Y,length=1>
-##contig=<ID=18,length=1>
+##source=SpectrumSimulator
+##contig=<ID=12,length=1>
+##contig=<ID=16,length=1>
+##contig=<ID=2,length=1>
+##contig=<ID=22,length=1>
 ##contig=<ID=8,length=1>
 ##INFO=<ID=AC,Number=A,Type=Integer,Description="Allele count in genotypes, for autosomal chromosomes assume 1">
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype call">
-#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	Sample1
-18	74158243	.	G	A	.	PASS	.	GT	0/1
-8	20145849	.	G	A	.	PASS	.	GT	0/1
-Y	2787387	.	G	A	.	PASS	.	GT	0/1
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	SimulatedSample
+8	20165060	.	C	T	.	PASS	.	GT	0/1
+22	21688737	.	G	A	.	PASS	.	GT	0/1
+2	218135033	.	G	A	.	PASS	.	GT	0/1
+16	1213928	.	C	T	.	PASS	.	GT	0/1
+12	26963420	.	G	A	.	PASS	.	GT	0/1

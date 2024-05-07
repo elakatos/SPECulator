@@ -19,12 +19,19 @@ import numpy as np                       # Library for numerical computing
 # TODO: fix typo! (now commented out as I don't have vcf)
 # from vfc_output import get_chr_pos       # Import the function accessing ensembl - from the file vcf_output.py
 from ensembl_request import get_hgvs_genomic, hgvs_converter 
+from vcf_output import vcf_writer
+
+# TODO: Call in main argument for rerun failed requests - YES
+# TODO: test input/output full step
+# TODO: Test if request function cancels the program if internet connection is lost 
+
 
 # ====================
 # INPUT OPERATIONS 
 # ====================
 
 #region Input
+
 
 
 # Function to parse command-line arguments
@@ -469,3 +476,11 @@ if __name__ == "__main__":                                                  # Ch
         for key, value in chr_info.items():
             print(f"key: {key} value: {value}")
         
+        # Create VCF
+        # TODO: Change output to be in the run directory
+        # TODO: Change name of simulator in vcf_output once decided.
+        output = 'output.vcf'
+        
+        vcf_writer(chr_info, output)
+        
+        print("\nEnd of simulation")
