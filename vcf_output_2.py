@@ -33,14 +33,14 @@ writer = vcfpy.Writer.from_path(
             
             # TODO: Add contig lines for every chromosome.
             # TODO: Automate! And sorted.
-            vcfpy.ContigHeaderLine(ID='18'), 
-            vcfpy.ContigHeaderLine(ID='8'),
-            vcfpy.ContigHeaderLine(ID='Y'),
+            vcfpy.ContigHeaderLine.from_mapping({'ID': '18', 'length': 80373285}),
+            vcfpy.ContigHeaderLine.from_mapping({'ID': '8', 'length': 145138636}),
+            vcfpy.ContigHeaderLine.from_mapping({'ID': 'Y', 'length': 57227415}),
             
             # TODO: Do we need allele count info?
             # AC = Allele count, A = this INFO field can have as many values as there are alternate allelesused to provide counts of each alternate allele found in the genotypes.
             # GT = Describes the genotype of each sample at each site. The genotype is a critical part of variant representation. This part should not be changed.
-            vcfpy.InfoHeaderLine(id='AC', number='A', type='Integer', description='Allele count in genotypes, for autosomal chromosomes assume 1'),
+            vcfpy.InfoHeaderLine.from_mapping({'ID': 'AC', 'Number': 'A', 'Type': 'Integer', 'Description': 'Allele count in genotypes, for autosomal chromosomes assume 1'}),
             vcfpy.FormatHeaderLine(id='GT', number='1', type='String', description='Genotype')
         ],
         # TODO: Change? Add so it includes all samples? Or what is it supposed to contain?

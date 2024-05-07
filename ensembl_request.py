@@ -28,7 +28,6 @@ def get_hgvs_genomic(hgvs_input, url, headers):
     
     MAX_BATCH_SIZE = 150                                               # Maximum number of items in a batch
     
-    # TODO: Change so it maintains input order?
     hgvs_input = list(set(hgvs_input))                                 # Remove duplicates
     
     # Check if input needs to be split into smaller lists
@@ -147,7 +146,6 @@ if __name__ == "__main__":
     #hgvs_notation = ["ENST00000603986:c.1050C>T", "ENST00000383070:c.55C>T"] # X and Y
     hgvs_notation = ["ENST00000169551:c.609G>A", "ENST00000558353:c.323G>A", "ENST00000519026:c.1396G>A", "ENST00000431539:c.757C>T", "ENST00000603986:c.1050C>T", "ENST00000603986:c.1223G>A", "ENST00000383070:c.55C>T", "ENST00000383070:c.217G>A", "ENST00000383070:c.217G>A"]
     
-    # TODO: Test with sublists (large dataset)
     
     # Test importing hgvsc list
     path_to_file = "tests/example_transcript_list_test_signature_1_of_1.txt"
