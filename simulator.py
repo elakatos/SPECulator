@@ -1,6 +1,7 @@
 """Processing FASTA files and mutational profiles to simulate mutational signatures."""
 
-
+# TODO: Remove modules and functions that are not used in the main program
+# TODO: is "get_random_position_in_gene()" not used at all? Eszter has commented it out :)
 # Import built-in Python libraries
 import argparse                          # Library for parsing command-line arguments
 import random                            # Library for generating random numbers
@@ -16,6 +17,7 @@ import numpy as np                       # Library for numerical computing
 # Import functions from other files
 # TODO: fix typo! (now commented out as I don't have vcf)
 from output_paths import get_output_folders, get_output_path, write_output
+from randomized_operations import random_sampling, get_random_position_in_gene, get_transcript_position 
 from ensembl_request import get_hgvs_genomic, hgvs_converter 
 from vcf_output import vcf_writer
 
@@ -29,7 +31,6 @@ from vcf_output import vcf_writer
 # ====================
 
 #region Input
-
 
 
 # Function to parse command-line arguments
@@ -47,10 +48,12 @@ def parse_arguments():
     parser.add_argument('-f', required=True, help="Mutational profile")                         # Adds -f signature file
     parser.add_argument('-n', type=int, required=True, help="Number of simulated mutations")    # Adds -n number of mutations
     parser.add_argument('-r', type=int, required=True, help="Number of runs")                   # Adds -r number of runs
+    parser.add_argument('-o', required=False, help="HGVS coding list. Skips simulation and generate VCF")          # Adds -o HGVS coding file for VCF generation
     
     args = parser.parse_args()                # Reads the command line arguments 
     return vars(args)                         # Returns the arguments as a dictionary
             # output example: {'i': 'input.fasta', 'f': 'profile.txt', 'n': 100, 'r': 10}
+
 
 # Function to read a FASTA file and return sequences
 def read_fasta_list(fasta_file):
@@ -63,6 +66,7 @@ def read_fasta_list(fasta_file):
         sequences.append(( ((record.id.split('|')[0]).split(' ')[0]).split('.')[0],str(record.seq)))
     return sequences                                   # Example output: [('ENSTxxx': 'ATGCGACTGATCGATCGTACG')]
 
+
 # Function to read a FASTA file and return sequences
 def read_fasta(fasta_file):
     """
@@ -74,6 +78,7 @@ def read_fasta(fasta_file):
         sequences[record.id] = str(record.seq)         # Adds the ID and sequence to the dictionary
         
     return sequences                                   # Example output: {'sequenceID': 'ATGCGACTGATCGATCGTACG',}
+
 
 def read_transcript_list(transcript_list_file):
     """
@@ -124,6 +129,7 @@ def get_freq(profile_file):
             freq[triplet][change]['freq'] = freq[triplet][change]['count'] / total_count   # Calculates the frequency of the change and adds it to the dictionary
             
     return freq                           # output example: {'CGA': {'G/A': {'count': 10, 'freq': 0.1}}}
+
 
 # TODO: Redo so It calculates probabilities and not saves freq.
 
@@ -225,56 +231,6 @@ def calculate_probabilities(triplet_count, counting):   # Takes the previous dic
 
 
 # ====================
-# RANDOMIZED OPERATIONS
-# ====================
-
-#region Random
-
-# Function to perform random sampling based on frequencies
-def random_sampling(frequencies, n_sim):
-    """
-    Takes a dictionary of frequencies (freq) and performs random sampling (args=n times) based on these frequencies.
-    Returns a list of sampled elements.
-    """
-    
-    elements = []
-    probs = []
-    
-    for triplet in frequencies:                                 # From get_freq() - # Example: {'CGA': {'G/A': {'count': 10, 'freq': 0.1}}}
-        for change in frequencies[triplet]:                     # Iterates over the substitutions (second level) in the dictionary
-            element = f"{triplet}_{change}"                     # Creates a string with the triplet and the substitution separated by an underscore
-            elements.append(element)                            # Adds the string to the elements list
-            probs.append(frequencies[triplet][change]['freq'])  # Adds the frequency to the probs list. This frequency will be used as the probability of selecting the corresponding element during the random sampling.
-                                # Examples: ['CGA_G/A', 'CGA_C/A'], [0.1, 0.2]
-    return np.random.choice(elements, size=n_sim, p=probs)      # This is an array of n_sim elements, each of which is a string from the elements list, selected randomly based on the probabilities in the probs list. The exact contents of the array will vary each time the function is called
-                                # Example: array(['CGA_G/A', 'CGA_G/A', 'CGA_C/A', ..., 'CGA_G/A', 'CGA_C/A', 'CGA_G/A'])
-
-
-# Function to get a random position in a gene
-def get_random_position_in_gene(posingene, transcript, triplet):
-    """
-    Gets a random position in a gene for a given transcript and triplet. 
-    Returns a random position that will be mutated
-    """
-    # This function returns a random position in a gene where a given triplet occurs in a given transcript.
-    # Input: pos_in_gene{} - {'transcript1': {'ATG': [0, 5, 10], 'TGC': [1, 6]}, 'transcript2': {'ATG': [0, 3, 7], 'TGC': [1]}}
-    positions = posingene[transcript][triplet]   # Retrieves the list of positions where the given triplet occurs in the given transcript from the dictionary.
-    return random.choice(positions) + 1          # A random position is selected from this list using the random.choice() function. +1 is added since the triplet start at the first base and it is the second that will be mutated. 
-
-def get_transcript_position(transcript, triplet, db_folder):
-    """
-    Loads a transcript and randomly chooses a position with a given triplet
-    """
-    with open(db_folder+'/'+transcript+'.pkl', 'rb') as read_db:
-        posingene = pickle.load(read_db)
-    
-    positions = posingene[triplet]   
-    return random.choice(positions) + 1 
-
-#endregion
-
-
-# ====================
 # MAIN PROGRAM
 # ====================
 
@@ -329,6 +285,7 @@ if __name__ == "__main__":                                                  # Ch
     # Iterating over sampled triplets and looping runs
     for i in range(args['r']):                            # Run the simulation -r times. Numbers series created with range(). The loop will run the number of times specified by the -r argument.
         
+        print(f"\nRun {i+1}\n")                           # Print the run number
         print("Simulate mutations")
         
         hgvsc_list = []                                   # Create an empty list to store the output strings

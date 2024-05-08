@@ -1,0 +1,1 @@
+python3 test_hgvsc_input_arg.py -n 4 -r1
