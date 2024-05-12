@@ -48,7 +48,7 @@ def parse_arguments():
     parser.add_argument('-f', required=True, help="Mutational profile")                         # Adds -f signature file
     parser.add_argument('-n', type=int, required=True, help="Number of simulated mutations")    # Adds -n number of mutations
     parser.add_argument('-r', type=int, required=True, help="Number of runs")                   # Adds -r number of runs
-    parser.add_argument('-o', required=False, help="HGVS coding list. Skips simulation and generate VCF")          # Adds -o HGVS coding file for VCF generation
+    parser.add_argument('-o', required=False, help="HGVS coding list. Overrides simulation and generate VCF from HGVSC list")          # Adds -o HGVS coding file for VCF generation
     
     args = parser.parse_args()                # Reads the command line arguments 
     return vars(args)                         # Returns the arguments as a dictionary
@@ -79,7 +79,7 @@ def read_fasta(fasta_file):
         
     return sequences                                   # Example output: {'sequenceID': 'ATGCGACTGATCGATCGTACG',}
 
-
+# 
 def read_transcript_list(transcript_list_file):
     """
     Reads in list of transcript IDs to consider
@@ -89,6 +89,17 @@ def read_transcript_list(transcript_list_file):
         lines = list_in.readlines()
     seqIDs = [(l.strip().split('|')[0]).split('.')[0] for l in lines] # processing to ignore .version and other info
     return seqIDs                                                     # example output: ['ENST000001', 'ENST000002']
+
+
+# Opens a txt file containing HGVS coding sequences and returns a list
+def open_hgvsc(args):
+    """
+    Reads a file of HGVS coding sequences and returns a list
+    """
+    with open(args["o"], "r") as file:
+        lines = [line.strip() for line in file.readlines()]
+    
+    return lines
 
 #endregion
 
@@ -245,115 +256,142 @@ if __name__ == "__main__":                                                  # Ch
     db_folder = args['d']                                                   # Assign database folder to a variable    
     # TODO: Check if db_folder exist, otherwise, create it.
     
-    print("Read input files and calculate frequencies")
     
-    # Read input files and calculate frequencies
-    freq = get_freq(args['f'])                                              # Calculate frequencies from mutational profile file and store in freq dictionary
-    if args['i'] is not None:     # if a fasta file is provided
-        sequences = read_fasta_list(args['i'])                              # Read FASTA file and return list of tuples of IDs and sequences
-        triplet_counts = process_triplet_positions(sequences, db_folder)    # In this case new database is processed based on fasta
-        run_name = '.'.join(args['i'].split('/')[-1].split('.')[:-1])       # split('/')[-1] - Picks the string after the last "/". split('.')[:-1] and '.'.join() removes the file type and joins the string.
-    elif args['t'] is not None:   # if a list of transcripts is provided
-        transcripts = read_transcript_list(args['t'])
-        triplet_counts = compute_triplet_counts(transcripts, db_folder)
-        run_name = '.'.join(args['t'].split('/')[-1].split('.')[:-1])       # split('/')[-1] - Picks the string after the last "/". split('.')[:-1] and '.'.join() removes the file type and joins the string.
-    else:                         # use all entries in pre-processed count file
-        with open(args['c'], 'rb') as read_db:     # Read in saved count file
-            triplet_counts = pickle.load(read_db)
-    # TODO: add checks for ensuring database and triplet_counts contain the same transcripts
+    #### Program to convert HGVS coding to VCF ####
     
-    # Calculate triplet counts, gene lengths, and probabilities
-    # triplet_count, gene_length, pos_in_gene, counting = calculate_triplet_counts(sequences)   # The function returns 4 dictionaries
-    # probabilities = calculate_probabilities(triplet_count, counting)                          # Calculate probabilities for each triplet in each transcript and store in probabilities dictionary 
+    ########## here starts coding input chain ##########
     
-    print("Perform random sampling")
-    
-    # Perform random sampling based on triplet frequencies
-    sampled_triplets = random_sampling(freq, args['n'])      # takes -n mutations as input. Returns a list of sampled elements.
-    
-    print("Create output directories")
-    
-    # Creating output directory
-    directories = get_output_folders(run_name, args)             # Returns the intended output directory path as a string.
-    os.makedirs(directories, exist_ok=True)                # Creates the output directories if they do not exist already.
-    
-    
-    #### Main simulation part ####: 
-    
-    print("Start simulation")
-    
-    # Iterating over sampled triplets and looping runs
-    for i in range(args['r']):                            # Run the simulation -r times. Numbers series created with range(). The loop will run the number of times specified by the -r argument.
+    if args['o'] is not None:     # if a list of HGVS coding is provided
+        print("Simulation override. HGVSC list provided")
         
-        print(f"\nRun {i+1}\n")                           # Print the run number
-        print("Simulate mutations")
-        
-        hgvsc_list = []                                   # Create an empty list to store the output strings
-        
-        for run in sampled_triplets:                      # Each element in this list is a string representing a triplet and a substitution separated by an underscore "_". The loop iterates over these strings. 
-            trip, sub = run.split("_")                    # split() splits the string  at the underscore. The parts are unpacked into the variables trip (triplet) and sub (substitution). If run was a string like "CGA_G/A", then trip would become "CGA" and sub would become "G/A".
-            
-            # probabilities is a dictionary containing information about each triplet, including names and probabilities.
-            # names = probabilities[trip]['name']         # names is a list of transcripts
-            # probs = probabilities[trip]['prob']         # probs is a list of probabilities
-            names = triplet_counts[trip][0]
-            counts = triplet_counts[trip][1]              # counts are used as weights to not have to compute probabilities (faster)
-            
-            # TODO: isnt this already performed in a function?
-            # Randomly select a transcript based on probabilities
-            # selected_transcript = np.random.choice(names, p=probs)       # np.random.choice() returns a random transcript based on the probabilities. p=probs is the list of probabilities
-            selected_transcript = random.choices(names, weights=counts)[0] # using random.choices (since faster), returns a randomly selected one weighted by the number of times each transcript has the triplet
-            
-            # Get a random position in the selected gene
-            # position = get_random_position_in_gene(pos_in_gene, selected_transcript, trip)   # Inside the function, it first retrieves the list of positions where the given triplet occurs in the given transcript from the posingene dictionary. Then it uses the random.choice() function to select a random position from this list.
-            position = get_transcript_position(selected_transcript, trip, db_folder)           # Reads in the corresponding transcript dictionary file, and chooses a random position where that triplet can be found
-            
-            # Output the result to screen
-            ch = sub.split("/")                          # split() splits the string at the slash and saves into a list. The parts are unpacked into the variables ch[0] and ch[1]. If sub was a string like "A/B", then ch would become the list ['A', 'B'].
-            output_string = f"{selected_transcript}:c.{position + 1}{ch[0]}>{ch[1]}"
-            hgvsc_list.append(output_string)             # Append the output string to the list hgvsc_list
-            
-            #print(f"\n{output_string}")                  # The printed string will have the format "selected_transcript:c.positionch[0]>ch[1]". If selected_transcript was "transcript1", position was 123, and ch was ['A', 'B'], the printed string would be "transcript1:c.123A>B"
-            
-            # Output to file
-            write_output(output_string,directories, run_name, args, i)
-            
-            
-        #### Retrieve chromosome and chromosome position from ENSEMBL REST API ####
-        # TODO: Clean up all prints
-        
-        print("Access ensemble API")
-        
+        hgvsc_list = open_hgvsc(args)  
+        # TODO: Move these inside function instead?              
         url = "https://rest.ensembl.org/variant_recoder/homo_sapiens"
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
         
+        print("Access ensemble API")
         hgvs_genomic, hgvs_failed = get_hgvs_genomic(hgvsc_list, url, headers)        # Calls the function to get the HGVS genomic notation from the REST API. The function returns 1 dictionary, 1 list: hgvs_genomic and hgvs_failed.
         
-        # Print the failed HGVS coding
-        print("\nHere starts the failed:\n")
-        for failed in hgvs_failed:
-            print(f"Failed: {failed}")
-            
         print("Extract data for VCF")
-        
-        # Call the HGVS converter function
         chr_info = hgvs_converter(hgvs_genomic)
         
-        # Test prints for the chromosome information
-        print("\nHere starts the chromosome information:\n")
+        print("\nWrite VCF:\n")
+        ##### Write VCF #####
+        # TODO: fix the VCF output path
+        # TODO: Make output naming based on input file name?
         
-        for key, value in chr_info.items():
-            print(f"key: {key} value: {value}")
-        
-        #### Create VCF ####
-        # TODO: Change name of simulator in vcf_output once decided.
-        # TODO: Simplify the naming of files?
-        
-        vcf_output_path = get_output_path(directories, i+1, run_name, args)  # directories - Path to output folder, run_name - Processed name string based on input.
-        vcf_output_path = vcf_output_path.rsplit('.', 1)[0] + '.vcf'        # 1 specifies the number of times split() will occur.
-        
+        vcf_output_path = args['o'].rsplit('.', 1)[0] + '.vcf'
+        print(f"This is '-o' input: {args['o']}")
+        print(f"This is the changed string: {vcf_output_path}")
         vcf_writer(chr_info, vcf_output_path)
+    
+    
+    
+    ########## If no HGVSC list is provided, the program will continue with the simulation ##########
+    else:                                                              
+        print("No HGVSC list provided")
+        print("Read input files and calculate frequencies")
         
-        print("\nEnd of simulation")
+        # Read input files and calculate frequencies
+        freq = get_freq(args['f'])                                              # Calculate frequencies from mutational profile file and store in freq dictionary
+        if args['i'] is not None:     # if a fasta file is provided
+            sequences = read_fasta_list(args['i'])                              # Read FASTA file and return list of tuples of IDs and sequences
+            triplet_counts = process_triplet_positions(sequences, db_folder)    # In this case new database is processed based on fasta
+            run_name = '.'.join(args['i'].split('/')[-1].split('.')[:-1])       # split('/')[-1] - Picks the string after the last "/". split('.')[:-1] and '.'.join() removes the file type and joins the string.
+        elif args['t'] is not None:   # if a list of transcripts is provided
+            transcripts = read_transcript_list(args['t'])
+            triplet_counts = compute_triplet_counts(transcripts, db_folder)
+            run_name = '.'.join(args['t'].split('/')[-1].split('.')[:-1])       # split('/')[-1] - Picks the string after the last "/". split('.')[:-1] and '.'.join() removes the file type and joins the string.
+        else:                         # use all entries in pre-processed count file
+            with open(args['c'], 'rb') as read_db:     # Read in saved count file
+                triplet_counts = pickle.load(read_db)
+        # TODO: add checks for ensuring database and triplet_counts contain the same transcripts
+        
+        # Calculate triplet counts, gene lengths, and probabilities
+        # triplet_count, gene_length, pos_in_gene, counting = calculate_triplet_counts(sequences)   # The function returns 4 dictionaries
+        # probabilities = calculate_probabilities(triplet_count, counting)                          # Calculate probabilities for each triplet in each transcript and store in probabilities dictionary 
+        
+        print("Perform random sampling")
+        
+        # Perform random sampling based on triplet frequencies
+        sampled_triplets = random_sampling(freq, args['n'])      # takes -n mutations as input. Returns a list of sampled elements.
+        
+        print("Create output directories")
+        
+        # Creating output directory
+        directories = get_output_folders(run_name, args)             # Returns the intended output directory path as a string.
+        os.makedirs(directories, exist_ok=True)                # Creates the output directories if they do not exist already.
+        
+        
+        #### Main simulation part ####: 
+        
+        print("Start simulation")
+        
+        # Iterating over sampled triplets and looping runs
+        for i in range(args['r']):                            # Run the simulation -r times. Numbers series created with range(). The loop will run the number of times specified by the -r argument.
+            
+            print(f"\nRun {i+1}\n")                           # Print the run number
+            print("Simulate mutations")
+            
+            hgvsc_list = []                                   # Create an empty list to store the output strings
+            
+            for run in sampled_triplets:                      # Each element in this list is a string representing a triplet and a substitution separated by an underscore "_". The loop iterates over these strings. 
+                trip, sub = run.split("_")                    # split() splits the string  at the underscore. The parts are unpacked into the variables trip (triplet) and sub (substitution). If run was a string like "CGA_G/A", then trip would become "CGA" and sub would become "G/A".
+                
+                # probabilities is a dictionary containing information about each triplet, including names and probabilities.
+                # names = probabilities[trip]['name']         # names is a list of transcripts
+                # probs = probabilities[trip]['prob']         # probs is a list of probabilities
+                names = triplet_counts[trip][0]
+                counts = triplet_counts[trip][1]              # counts are used as weights to not have to compute probabilities (faster)
+                
+                # Randomly select a transcript based on probabilities
+                # selected_transcript = np.random.choice(names, p=probs)       # np.random.choice() returns a random transcript based on the probabilities. p=probs is the list of probabilities
+                selected_transcript = random.choices(names, weights=counts)[0] # using random.choices (since faster), returns a randomly selected one weighted by the number of times each transcript has the triplet
+                
+                # Get a random position in the selected gene
+                # position = get_random_position_in_gene(pos_in_gene, selected_transcript, trip)   # Inside the function, it first retrieves the list of positions where the given triplet occurs in the given transcript from the posingene dictionary. Then it uses the random.choice() function to select a random position from this list.
+                position = get_transcript_position(selected_transcript, trip, db_folder)           # Reads in the corresponding transcript dictionary file, and chooses a random position where that triplet can be found
+                
+                # Create HGVS coding string
+                ch = sub.split("/")                          # split() splits the string at the slash and saves into a list. The parts are unpacked into the variables ch[0] and ch[1]. If sub was a string like "A/B", then ch would become the list ['A', 'B'].
+                output_string = f"{selected_transcript}:c.{position + 1}{ch[0]}>{ch[1]}"
+                hgvsc_list.append(output_string)             # Append the output string to the list hgvsc_list
+                
+                # Output HGVS coding to file
+                write_output(output_string,directories, run_name, args, i)
+            
+            
+            #### Retrieve chromosome and chromosome position from ENSEMBL REST API ####
+            # TODO: Clean up all prints
+            
+            print("Access ensemble API")
+            
+            url = "https://rest.ensembl.org/variant_recoder/homo_sapiens"
+            headers = {"Content-Type": "application/json", "Accept": "application/json"}
+            
+            hgvs_genomic, hgvs_failed = get_hgvs_genomic(hgvsc_list, url, headers)        # Calls the function to get the HGVS genomic notation from the REST API. The function returns 1 dictionary, 1 list: hgvs_genomic and hgvs_failed.
+            
+            # Print the failed HGVS coding
+            for failed in hgvs_failed:
+                print(f"Failed: {failed}")
+                
+            #### Create VCF ####
+            # TODO: Change name of simulator in vcf_output once decided.
+            
+            print("Create VCF output")
+            chr_info = hgvs_converter(hgvs_genomic)
+            
+            vcf_output_path = get_output_path(directories, i+1, run_name, args)  # directories - Path to output folder, run_name - Processed name string based on input.
+            vcf_output_path = vcf_output_path.rsplit('.', 1)[0] + '.vcf'        # 1 specifies the number of times split() will occur.
+            
+            vcf_writer(chr_info, vcf_output_path)
+            
+            print("\nEnd of program")
 
 #endregion
+
+
+# Ask Eszter:
+# TODO: Move URL and HEADER inside function instead?
+# TODO: Change required to optional?
+# TODO: Simplify the naming of files?
