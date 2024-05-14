@@ -21,18 +21,16 @@ def split_list(list, size):
 
 # Takes a list of HGVS coding, url to ensembl,and Ensembl REST API (variant_recorder) 
 # headers as input and returns a dictionary with the corresponding HGVS genomic (HGVSG) notation.
-def get_hgvs_genomic(hgvs_input, url, headers):
+def get_hgvs_genomic(hgvs_input, url, headers, batch_size):
     """
     Extracts and HGVS genomic (HGVSG) corresponding to the input HGVS coding (HGVSC).
     """
     
-    MAX_BATCH_SIZE = 150                                               # Maximum number of items in a batch
-    
     hgvs_input = list(set(hgvs_input))                                 # Remove duplicates
     
     # Check if input needs to be split into smaller lists
-    if len(hgvs_input) > MAX_BATCH_SIZE:                  
-        sublists = split_list(hgvs_input, MAX_BATCH_SIZE)              # Split the list into smaller lists   
+    if len(hgvs_input) > batch_size:                  
+        sublists = split_list(hgvs_input, batch_size)              # Split the list into smaller lists   
     else:
         sublists = [hgvs_input]                                         # If the list is smaller than the maximum batch size, save it as a sublist
     
@@ -47,7 +45,11 @@ def get_hgvs_genomic(hgvs_input, url, headers):
         print("Accessing Ensembl REST API...")
         # Ensembl REST API (variant_recorder)
         data = json.dumps({"ids": sublist})                               # JSON data for the POST request 
-        response = requests.post(url, headers=headers, data=data)            # Send a POST request
+        try:
+            response = requests.post(url, headers=headers, data=data) 
+        except requests.exceptions.RequestException as e:
+            print(f"An error occurred while making the POST request: {e}")
+            continue
         
         # Proceed with successful requests
         if response.status_code == 200:                                      # Status code 200 means successfull request                         
@@ -92,8 +94,8 @@ def get_hgvs_genomic(hgvs_input, url, headers):
             print(f"Failed to retrieve data: {response.status_code}\n")
             print(f"{response.text}\n")
             
-    for _, hgvs in hgvs_failed:
-        print(f"Failed to match: {hgvs}")
+    #for _, hgvs in hgvs_failed:
+        #print(f"Failed to match: {hgvs}")
         
     return hgvs_genomic, hgvs_failed
 
