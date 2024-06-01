@@ -253,22 +253,20 @@ if __name__ == "__main__":                                                  # Ch
 #endregion
 
 
-# Ask Eszter:
+# Fix:
 # TODO: Move URL and HEADER inside function instead?
 # TODO: Change required to optional?
 # TODO: Simplify the naming of files?
-# TODO: Add argument for max batch size?
 # TODO: Retry loop for failed request?
+# TODO: break out frequency functions
 
 # Testing:
 # TODO: batch size 150, 200, 250 x10-20 runs
-# TODO: break out frequency functions
+# TODO: Run multiple 1000 sim and measure time (function for this)
 
-#### Done since last meeting ####
-# Fixed request -> smaller batches
-# Cleaned up code
-# Moved def functions into separate files
-# Override argument -> skips simulation and generates VCF from HGVSC list
 
 # argumenr batchsize
-# 
+
+# TODO: Fix VCF problem!
+# If several mutations are in the same gene, the VCF file will only contain the first repeated several times.
+# Fix by removing after creating if multiple are in the same list?
