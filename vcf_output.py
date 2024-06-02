@@ -37,12 +37,13 @@ def vcf_writer(data, output):
         # TODO: Change simulator to final name
         
         # Automatically add contig lines for every unique chromosome sorted by numerical order and then lexicographical order for 'X', 'Y'.
+        # TODO: Not working properly. Sorts after 1 numbers (1 then 11 etc).
         *[
             vcfpy.ContigHeaderLine.from_mapping({'ID': chrom, 'length': 1})  # Replace '1' with actual length if known
             for chrom in sorted({data[0] for data in data.values()}, key=lambda x: (x.isdigit(), x))
         ],
         
-        # Allele count information may not be relevant for simulated data unless simulating population data
+        # 
         vcfpy.InfoHeaderLine.from_mapping({'ID': 'AC', 'Number': 'A', 'Type': 'Integer', 'Description': 'Allele count in genotypes, for autosomal chromosomes assume 1'}),
         vcfpy.FormatHeaderLine.from_mapping({'ID': 'GT', 'Number': '1', 'Type': 'String', 'Description': 'Genotype call'})
     ]
