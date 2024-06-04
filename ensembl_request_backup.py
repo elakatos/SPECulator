@@ -50,8 +50,7 @@ def get_hgvs_genomic(hgvs_input, url, headers, batch_size):
         
         print("Accessing Ensembl REST API...")
         # Ensembl REST API (variant_recorder)
-        data = json.dumps({"ids": sublist}) 
-        
+        data = json.dumps({"ids": sublist})                               # JSON data for the POST request 
         try:
             response = requests.post(url, headers=headers, data=data) 
         except requests.exceptions.RequestException as e:
@@ -62,10 +61,7 @@ def get_hgvs_genomic(hgvs_input, url, headers, batch_size):
         if response.status_code == 200:                                      # Status code 200 means successfull request                         
             
             result = response.json()                                         # Parse the response JSON
-            # Testprint
-            print("\nOutput JSON from ensembl:")
-            print(json.dumps(result, indent=4))
-            processed = set()                                                # A set to keep track of processed items
+            processed = set()                                                    # A set to keep track of processed items
             found_match = False                                              # Flag for matching HGVS coding
             
             print("\nTesting matching coding/genomic:")

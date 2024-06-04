@@ -50,7 +50,7 @@ def parse_arguments():
     parser.add_argument('-n', type=int, required=True, help="Number of simulated mutations")    # Adds -n number of mutations
     parser.add_argument('-r', type=int, required=True, help="Number of runs")                   # Adds -r number of runs
     parser.add_argument('-o', required=False, help="HGVS coding list. Overrides simulation and generate VCF from HGVSC list")          # Adds -o HGVS coding file for VCF generation
-    parser.add_argument('-b', type=int, required=False, default=150, help="Batch size for API requests")     
+    parser.add_argument('-b', type=int, required=False, default=11, help="Batch size for API requests")     
     
     args = parser.parse_args()                # Reads the command line arguments 
     return vars(args)                         # Returns the arguments as a dictionary
@@ -239,10 +239,10 @@ if __name__ == "__main__":                                                  # Ch
             # TODO: Remove testprints when the problem is fixed.
             # Testprint to see if ensembl gives wrong pos.
             
-            print("\nBefore converting\n")
+            #print("\nBefore converting\n")
             
-            for key, value in hgvs_genomic.items():
-                print(f"Key: {key}, value: {value}")
+            #for key, value in hgvs_genomic.items():
+                #print(f"Key: {key}, value: {value}")
             
             #### Create VCF ####
             # TODO: Change name of simulator in vcf_output once decided.
@@ -253,10 +253,10 @@ if __name__ == "__main__":                                                  # Ch
             # TODO: Remove testprints when the problem is fixed.
             # Testprint to see if hgvd converter or vcf output fails
             
-            print("\nAfter converting\n")
+            #print("\nAfter converting\n")
             
-            for key, value in chr_info.items():
-                print(f"Key: {key}, value: {value}")
+            #for key, value in chr_info.items():
+                #print(f"Key: {key}, value: {value}")
                 
             
             vcf_output_path = get_output_path(directories, i+1, run_name, args)  # directories - Path to output folder, run_name - Processed name string based on input.
