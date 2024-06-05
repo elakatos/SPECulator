@@ -33,7 +33,7 @@ def get_hgvs_genomic(hgvs_input, url, headers, batch_size):
         sublists = split_list(hgvs_input, batch_size)              # Split the list into smaller lists   
     else:
         sublists = [hgvs_input]                                         # If the list is smaller than the maximum batch size, save it as a sublist
-        
+    
     # Storage
     hgvs_genomic = {}
     hgvs_failed = [(i, hgvs) for i, hgvs in enumerate(hgvs_input)]       # A list of tuples (index, value)
@@ -47,24 +47,24 @@ def get_hgvs_genomic(hgvs_input, url, headers, batch_size):
         print("\nSublist entering request:")
         for coding in sublist:
             print(coding)
-            
+        
         print("Accessing Ensembl REST API...")
         # Ensembl REST API (variant_recorder)
         data = json.dumps({"ids": sublist}) 
         
-        # Execute request
         try:
             response = requests.post(url, headers=headers, data=data) 
         except requests.exceptions.RequestException as e:
             print(f"An error occurred while making the POST request: {e}")
             continue
+        
         # Proceed with successful requests
         if response.status_code == 200:                                      # Status code 200 means successfull request                         
             
             result = response.json()                                         # Parse the response JSON
             # Testprint
-            #print("\nOutput JSON from ensembl:")
-            #print(json.dumps(result, indent=4))
+            print("\nOutput JSON from ensembl:")
+            print(json.dumps(result, indent=4))
             processed = set()                                                # A set to keep track of processed items
             found_match = False                                              # Flag for matching HGVS coding
             
@@ -75,22 +75,37 @@ def get_hgvs_genomic(hgvs_input, url, headers, batch_size):
                     if type(variant_data) == dict:                           # Errors saved as lists, hits saved as dictionaries.
                         
                         # Iterate through each HGVS input to match with responses
-                        for j, hgvs in enumerate(sublist):
-                            base_hgvs_coding = hgvs.split(':')[0].split('.')[0]  # Extract transcript id
-                            mutation_detail = hgvs.split(':')[1]  # Extract mutation detail
+                        for j, hgvs in enumerate(sublist):                             # List of HGVS coding
                             
-                            for variant in variant_data['hgvsc']:
-                                variant_transcript_id = variant.split(':')[0].split('.')[0]
-                                variant_mutation_detail = variant.split(':')[1]
+                            
+                            if hgvs in processed:                                         # If this hgvs has been processed before, skip it
                                 
-                                if base_hgvs_coding == variant_transcript_id and mutation_detail == variant_mutation_detail:
-                                    print(f"Exact match found for: {hgvs}, adding: {variant_data['hgvsg'][0]}")
-                                    hgvs_genomic[hgvs] = variant_data['hgvsg'][0]
-                                    hgvs_failed.remove((index_map[hgvs], hgvs)) # Remove the matching HGVS coding
-                                    processed.add(hgvs)
-                                    # TODO: found_match only used for basic print. Elaborate or remove.
-                                    found_match = True
-                                    break                                       # Flag for matching HGVS coding
+                                continue
+                                
+                            # TODO: This split might lead to the problem
+                            # TODO: Add testprints before and after
+                            base_hgvs_coding = hgvs.split(':')[0].split('.')[0]           # Remove version number
+                            
+                            #testprint
+                            #print(f"Splited: {base_hgvs_coding}")
+                                
+                            # Check if result contains both HGVSC and HGVSG
+                            if 'hgvsc' in variant_data and 'hgvsg' in variant_data:                        
+                                
+                                # TODO: add testprint here and remove when fixed
+                                # Testprint hgvsc and hgvsg
+                                
+                                # Save genomic data and remove the input from the failed list
+                                if any(base_hgvs_coding in s.split(':')[0].split('.')[0] for s in variant_data['hgvsc']): # Check if the input HGVS coding matches any returned HGVSC values (ignoring version)
+                                    
+                                    # TODO: Here is the first found instance of doublet genomic!
+                                    print(f"Match found for: {base_hgvs_coding}, adding: {variant_data['hgvsg'][0]}")
+                                    hgvs_genomic[hgvs] = variant_data['hgvsg'][0]            # Save the genomic data
+                                    original_index = index_map[hgvs]                         # Get the original index of the input
+                                    hgvs_failed.remove((original_index, hgvs))               # Remove the tuple (index, value)                          # Remove successfull input from failed list
+                                    processed.add(hgvs)                                      # Add this hgvs to the set of processed items
+                                    
+                                    found_match = True                                       # Flag for matching HGVS coding
                                     
                     else:
                         print("Input contains errors.")

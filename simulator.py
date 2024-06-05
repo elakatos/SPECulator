@@ -50,7 +50,7 @@ def parse_arguments():
     parser.add_argument('-n', type=int, required=True, help="Number of simulated mutations")    # Adds -n number of mutations
     parser.add_argument('-r', type=int, required=True, help="Number of runs")                   # Adds -r number of runs
     parser.add_argument('-o', required=False, help="HGVS coding list. Overrides simulation and generate VCF from HGVSC list")          # Adds -o HGVS coding file for VCF generation
-    parser.add_argument('-b', type=int, required=False, default=11, help="Batch size for API requests")     
+    parser.add_argument('-b', type=int, required=False, default=150, help="Batch size for API requests")     
     
     args = parser.parse_args()                # Reads the command line arguments 
     return vars(args)                         # Returns the arguments as a dictionary
@@ -234,7 +234,12 @@ if __name__ == "__main__":                                                  # Ch
             
             # Print matching/failed HGVS coding
             print(f"Number of matches: {len(hgvs_genomic)}")
+            #for key,value in hgvs_genomic.items():
+                #print(f"key: {key}, value: {value}")
+                
             print(f"Number of failed matches: {len(hgvs_failed)}")
+            for value in hgvs_failed:
+                print(value)
             
             # TODO: Remove testprints when the problem is fixed.
             # Testprint to see if ensembl gives wrong pos.
