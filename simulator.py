@@ -21,6 +21,7 @@ from output_paths import get_output_folders, get_output_path, write_output
 from randomized_operations import random_sampling, get_random_position_in_gene, get_transcript_position 
 from ensembl_request import get_hgvs_genomic, hgvs_converter 
 from vcf_output import vcf_writer
+from time_measure import timer
 
 # TODO: Call in main argument for rerun failed requests - YES
 # TODO: test input/output full step
