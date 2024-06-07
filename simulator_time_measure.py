@@ -10,6 +10,7 @@ import os                                # Library for interacting with the oper
 import re                                # Library for regular expressions
 import pickle                            # This library is particularly useful when you need to save complex Python data structures like lists, dictionaries, or class instances to a file that can be later retrieved
 import time
+import csv
 
 # Import external libraries
 from Bio import SeqIO                    # Biopython library for handling FASTA files
@@ -179,7 +180,7 @@ if __name__ == "__main__":                                                  # Ch
         # probabilities = calculate_probabilities(triplet_count, counting)                          # Calculate probabilities for each triplet in each transcript and store in probabilities dictionary 
         
         #### End of first section measurements - argument parsing and db loading
-        start_time, cumulative_time = elapsed_time(start_time, "First_section", cumulative_time)
+        start_time, cumulative_time_1 = elapsed_time(start_time, "First_section", cumulative_time)
         
         print("Perform random sampling")
         
@@ -231,7 +232,7 @@ if __name__ == "__main__":                                                  # Ch
                 write_output(output_string,directories, run_name, args, i)
             
             #### End of second section measurements - simulation and output writing
-            start_time, cumulative_time = elapsed_time(start_time, "Second_section", cumulative_time)
+            start_time, cumulative_time_2 = elapsed_time(start_time, "Second_section", cumulative_time_1)
             #### Retrieve chromosome and chromosome position from ENSEMBL REST API ####
             # TODO: Clean up all prints
             
@@ -259,7 +260,7 @@ if __name__ == "__main__":                                                  # Ch
             #for key, value in hgvs_genomic.items():
                 #print(f"Key: {key}, value: {value}")
             #### End of third section measurements - Request and conversion
-            start_time, cumulative_time = elapsed_time(start_time, "Third_section", cumulative_time)
+            start_time, cumulative_time_3 = elapsed_time(start_time, "Third_section", cumulative_time_2)
             
             #### Create VCF ####
             # TODO: Change name of simulator in vcf_output once decided.
@@ -284,7 +285,24 @@ if __name__ == "__main__":                                                  # Ch
             print("\nEnd of program")
             
             #### End of last section measurements - VCF writing
-            start_time, cumulative_time = elapsed_time(start_time, "Last_section", cumulative_time)
+            start_time, cumulative_time_4 = elapsed_time(start_time, "Last_section", cumulative_time_3)
+            
+            print(f"mutations: {args['n']}, first: {cumulative_time_1:.3f}, second: {cumulative_time_2:.3f}, third: {cumulative_time_3:.3f}, last: {cumulative_time_4:.3f}")
+            
+            file_path = "time_measures.csv"
+            
+            # Check if the file exists and if it ends with a newline
+            if os.path.exists(file_path):
+                with open(file_path, 'rb+') as file:
+                    file.seek(-1, os.SEEK_END)  # Go to the last character of the file
+                    if file.read(1) != b'\n':   # Check if it is a newline
+                        file.write(b'\n')       # If not, write a newline
+                        
+            # Now append new data
+            with open(file_path, "a", newline='') as file:
+                writer = csv.writer(file)
+                writer.writerow([args['n'], cumulative_time_1, cumulative_time_2, cumulative_time_3, cumulative_time_4])
+                
 
 #endregion
 
