@@ -3,6 +3,7 @@ output/
 large_fasta/
 transcript_db/
 tests/
+test_results/
 output/intermediate.txt
 example_transcript_list_XY.txt
 testing_split_list.py
