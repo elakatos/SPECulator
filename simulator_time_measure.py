@@ -9,6 +9,7 @@ from datetime import date                # Library for handling dates
 import os                                # Library for interacting with the operating system
 import re                                # Library for regular expressions
 import pickle                            # This library is particularly useful when you need to save complex Python data structures like lists, dictionaries, or class instances to a file that can be later retrieved
+import time
 
 # Import external libraries
 from Bio import SeqIO                    # Biopython library for handling FASTA files
@@ -21,6 +22,7 @@ from output_paths import get_output_folders, get_output_path, write_output
 from randomized_operations import random_sampling, get_random_position_in_gene, get_transcript_position 
 from ensembl_request import get_hgvs_genomic, hgvs_converter 
 from vcf_output import vcf_writer
+from time_measure import elapsed_time
 
 # TODO: Call in main argument for rerun failed requests - YES
 # TODO: test input/output full step
@@ -50,7 +52,7 @@ def parse_arguments():
     parser.add_argument('-n', type=int, required=True, help="Number of simulated mutations")    # Adds -n number of mutations
     parser.add_argument('-r', type=int, required=True, help="Number of runs")                   # Adds -r number of runs
     parser.add_argument('-o', required=False, help="HGVS coding list. Overrides simulation and generate VCF from HGVSC list")          # Adds -o HGVS coding file for VCF generation
-    parser.add_argument('-b', type=int, required=False, default=150, help="Batch size for API requests")     
+    parser.add_argument('-b', type=int, required=False, default=200, help="Batch size for API requests")     
     
     args = parser.parse_args()                # Reads the command line arguments 
     return vars(args)                         # Returns the arguments as a dictionary
@@ -114,6 +116,10 @@ def open_hgvsc(args):
 
 if __name__ == "__main__":                                                  # Checks if the script is executed as the main program or imported as module. If the script is executed as the main program, the code block is executed, not if it is imported as a module.
     
+    #### Start timer ####
+    start_time = time.time()
+    cumulative_time = 0
+    
     print("\nParse arguments")
     
     # Parse command-line arguments
@@ -172,6 +178,9 @@ if __name__ == "__main__":                                                  # Ch
         # triplet_count, gene_length, pos_in_gene, counting = calculate_triplet_counts(sequences)   # The function returns 4 dictionaries
         # probabilities = calculate_probabilities(triplet_count, counting)                          # Calculate probabilities for each triplet in each transcript and store in probabilities dictionary 
         
+        #### End of first section measurements - argument parsing and db loading
+        start_time, cumulative_time = elapsed_time(start_time, "First_section", cumulative_time)
+        
         print("Perform random sampling")
         
         # Perform random sampling based on triplet frequencies
@@ -221,7 +230,8 @@ if __name__ == "__main__":                                                  # Ch
                 # Output HGVS coding to file
                 write_output(output_string,directories, run_name, args, i)
             
-            
+            #### End of second section measurements - simulation and output writing
+            start_time, cumulative_time = elapsed_time(start_time, "Second_section", cumulative_time)
             #### Retrieve chromosome and chromosome position from ENSEMBL REST API ####
             # TODO: Clean up all prints
             
@@ -238,8 +248,8 @@ if __name__ == "__main__":                                                  # Ch
                 #print(f"key: {key}, value: {value}")
                 
             print(f"Number of failed matches: {len(hgvs_failed)}")
-            for value in hgvs_failed:
-                print(value)
+            #for value in hgvs_failed:
+            #    print(value)
             
             # TODO: Remove testprints when the problem is fixed.
             # Testprint to see if ensembl gives wrong pos.
@@ -248,6 +258,8 @@ if __name__ == "__main__":                                                  # Ch
             
             #for key, value in hgvs_genomic.items():
                 #print(f"Key: {key}, value: {value}")
+            #### End of third section measurements - Request and conversion
+            start_time, cumulative_time = elapsed_time(start_time, "Third_section", cumulative_time)
             
             #### Create VCF ####
             # TODO: Change name of simulator in vcf_output once decided.
@@ -270,6 +282,9 @@ if __name__ == "__main__":                                                  # Ch
             vcf_writer(chr_info, vcf_output_path)
             
             print("\nEnd of program")
+            
+            #### End of last section measurements - VCF writing
+            start_time, cumulative_time = elapsed_time(start_time, "Last_section", cumulative_time)
 
 #endregion
 

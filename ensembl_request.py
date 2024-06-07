@@ -44,9 +44,9 @@ def get_hgvs_genomic(hgvs_input, url, headers, batch_size):
         
         # TODO: Remove testprint when fixed
         # Testprint Before request
-        print("\nSublist entering request:")
-        for coding in sublist:
-            print(coding)
+        print("\nSublist entering request")
+        #for coding in sublist:
+        #    print(coding)
             
         print("Accessing Ensembl REST API...")
         # Ensembl REST API (variant_recorder)
@@ -84,7 +84,7 @@ def get_hgvs_genomic(hgvs_input, url, headers, batch_size):
                                 variant_mutation_detail = variant.split(':')[1]
                                 
                                 if base_hgvs_coding == variant_transcript_id and mutation_detail == variant_mutation_detail:
-                                    print(f"Exact match found for: {hgvs}, adding: {variant_data['hgvsg'][0]}")
+                                    #print(f"Exact match found for: {hgvs}, adding: {variant_data['hgvsg'][0]}")
                                     hgvs_genomic[hgvs] = variant_data['hgvsg'][0]
                                     hgvs_failed.remove((index_map[hgvs], hgvs)) # Remove the matching HGVS coding
                                     processed.add(hgvs)
