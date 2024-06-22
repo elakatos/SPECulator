@@ -3,6 +3,7 @@ Create VCF output from the processed HGVS.
 """
 
 import vcfpy
+import re
 
 # TODO in main program:
 # TODO: Change output path to run folder
@@ -24,52 +25,56 @@ import vcfpy
 
 #output = 'output.vcf'
 
-chromosome_lengths = {
-        "1": "248_956_422",
-        "2": "242_193_529",
-        "3": "198_295_559",
-        "4": "190_214_555",
-        "5": "181_538_259",
-        "6": "170_805_979",
-        "7": "159_345_973",
-        "8": "145_138_636",
-        "9": "138_394_717",
-        "10": "133_797_422",
-        "11": "135_086_622",
-        "12": "133_275_309",
-        "13": "114_364_328",
-        "14": "107_043_718",
-        "15": "101_991_189",
-        "16": "90_338_345",
-        "17": "83_257_441",
-        "18": "80_373_285",
-        "19": "58_617_616",
-        "20": "64_444_167",
-        "21": "46_709_983",
-        "22": "50_818_468",
-        "X": "156_040_895",
-        "Y": "57_227_415",
-    }
+
+
+def chromosome_sort_key(chrom):
+    return [int(text) if text.isdigit() else text for text in re.split('([0-9]+)', chrom)]
+
 
 # VCF writer function
-def vcf_writer(data, output, chromosome_lengths):
+def vcf_writer(data, output):
     """
     Takes a dictionary of mutation and genomic information and creates a vcf
     """
-    
-    
+    # Dictionary of chromosome lengths
+    chromosome_lengths = {
+        "1": "248956422",
+        "2": "242193529",
+        "3": "198295559",
+        "4": "190214555",
+        "5": "181538259",
+        "6": "170805979",
+        "7": "159345973",
+        "8": "145138636",
+        "9": "138394717",
+        "10": "133797422",
+        "11": "135086622",
+        "12": "133275309",
+        "13": "114364328",
+        "14": "107043718",
+        "15": "101991189",
+        "16": "90338345",
+        "17": "83257441",
+        "18": "80373285",
+        "19": "58617616",
+        "20": "64444167",
+        "21": "46709983",
+        "22": "50818468",
+        "X": "156040895",
+        "Y": "57227415",
+    }
     
     # Prepare header lines for a new VCF writer
     header_lines = [
         vcfpy.HeaderLine(key='fileformat', value='VCFv4.2'),                         
-        vcfpy.HeaderLine(key='source', value='SpectrumSimulator'),  # Change "MutationSimulator" to your program's name
+        vcfpy.HeaderLine(key='source', value='SpecULATOR'),  # Change "MutationSimulator" to your program's name
         # TODO: Change simulator to final name
         
         # Automatically add contig lines for every unique chromosome sorted by numerical order and then lexicographical order for 'X', 'Y'.
         # TODO: Not working properly. Sorts after 1 numbers (1 then 11 etc).
         *[
-            vcfpy.ContigHeaderLine.from_mapping({'ID': chrom, 'length': 1})  # Replace '1' with actual length if known
-            for chrom in sorted({data[0] for data in data.values()}, key=lambda x: (x.isdigit(), x))
+            vcfpy.ContigHeaderLine.from_mapping({'ID': chrom, 'length': chromosome_lengths[chrom]})  # Replace '1' with actual length if known
+            for chrom in sorted(chromosome_lengths.keys(), key=chromosome_sort_key)
         ],
         
         # 
