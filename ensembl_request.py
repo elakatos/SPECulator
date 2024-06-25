@@ -120,9 +120,11 @@ def hgvs_converter(hgvs_genomic):
     # Save chromosome and locus information
     for coding, genomic in hgvs_genomic.items():
         match_genomic = pattern_genomic.search(genomic)
-        match_coding = pattern_key.search(coding)
+        match_coding = pattern_key.search(genomic)
         
+        # Create a dictionary with the chromosome, locus, reference and alternative alleles
         if match_genomic and match_coding:
+            
             # Check if the chromosome is somatic, X or Y
             if match_genomic.group(1) == "23":
                 chromosome = "X"
@@ -131,6 +133,7 @@ def hgvs_converter(hgvs_genomic):
             else:
                 chromosome = match_genomic.group(1).lstrip("0")    # lstrip() removes the potential "0" from the first position.
                 
+            # Save information and append to the dictionary
             locus = match_genomic.group(2)
             reference = match_coding.group(1)
             alternative = match_coding.group(2)
@@ -152,8 +155,8 @@ if __name__ == "__main__":
     #hgvs_notation = ["ENST00000169551:c.609G>A", "ENST00000558353:c.323G>A", "ENST00000519026:c.1396G>A", "ENST00000431539:c.757C>T"]   # 1 working 2 not 3 working 4 not
     #hgvs_notation = ["ENST00000603986:c.1050C>T", "ENST00000603986:c.1223G>A", "ENST00000383070:c.55C>T", "ENST00000383070:c.217G>A"] # X and Y
     #hgvs_notation = ["ENST00000603986:c.1050C>T", "ENST00000383070:c.55C>T"] # X and Y
-    hgvs_notation = ["ENST00000169551:c.609G>A", "ENST00000558353:c.323G>A", "ENST00000519026:c.1396G>A", "ENST00000431539:c.757C>T", "ENST00000603986:c.1050C>T", "ENST00000603986:c.1223G>A", "ENST00000383070:c.55C>T", "ENST00000383070:c.217G>A", "ENST00000383070:c.217G>A"]
-    
+    #hgvs_notation = ["ENST00000169551:c.609G>A", "ENST00000558353:c.323G>A", "ENST00000519026:c.1396G>A", "ENST00000431539:c.757C>T", "ENST00000603986:c.1050C>T", "ENST00000603986:c.1223G>A", "ENST00000383070:c.55C>T", "ENST00000383070:c.217G>A", "ENST00000383070:c.217G>A"]
+    hgvs_notation = ["ENST00000169551:c.609G>A"]
     
     # Test importing hgvsc list
     path_to_file = "tests/example_transcript_list_test_signature_1_of_1.txt"
@@ -168,7 +171,7 @@ if __name__ == "__main__":
     
     
     # Call HGVS genomic function (genomic in dict, failed in list)
-    hgvs_genomic_test, hgvs_failed_test = get_hgvs_genomic(hgvs_notation, url, headers)
+    hgvs_genomic_test, hgvs_failed_test = get_hgvs_genomic(hgvs_notation, url, headers, 150)
     
     # Test print of the program
     print("\nMatching coding-genomic:\n")
