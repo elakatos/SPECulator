@@ -50,7 +50,7 @@ def parse_arguments():
     parser.add_argument('-n', type=int, required=True, help="Number of simulated mutations")    # Adds -n number of mutations
     parser.add_argument('-r', type=int, required=True, help="Number of runs")                   # Adds -r number of runs
     parser.add_argument('-o', required=False, help="HGVS coding list. Overrides simulation and generate VCF from HGVSC list")          # Adds -o HGVS coding file for VCF generation
-    parser.add_argument('-b', type=int, required=False, default=150, help="Batch size for API requests")     
+    parser.add_argument('-b', type=int, required=False, default=50, help="Batch size for API requests")     
     
     args = parser.parse_args()                # Reads the command line arguments 
     return vars(args)                         # Returns the arguments as a dictionary
@@ -166,6 +166,7 @@ if __name__ == "__main__":                                                  # Ch
         else:                         # use all entries in pre-processed count file
             with open(args['c'], 'rb') as read_db:     # Read in saved count file
                 triplet_counts = pickle.load(read_db)
+            run_name = '.'.join(args['c'].split('/')[-1].split('.')[:-1])
         # TODO: add checks for ensuring database and triplet_counts contain the same transcripts
         
         # Calculate triplet counts, gene lengths, and probabilities

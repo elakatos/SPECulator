@@ -17,7 +17,10 @@ def get_freq(profile_file):
             # triplet, change, count = The splited lines is assigned to these variables in order.
             triplet, change, count = line.strip().split('\t')      # Separates the three columns in the count file at "tab" and saves it to its respective variable 
             
-            count = int(count)                                     # Converts the count string to an integer
+            # TODO: Add separation here
+            # Separate count and predefined frequency
+            
+            count = float(count)                                     # Converts the count string to an integer
             if triplet not in freq:                                # Checking if triplet is not in the dictionary - Might seem unecessary since each triplet should only occur once can prevent errors if the count files are wrong
                 freq[triplet] = {}                                 # If not, creates a new dictionary for the triplet as value
                                                         # output example: {'CGA': {}} - The empty dictionary will be "change" 
@@ -25,8 +28,10 @@ def get_freq(profile_file):
             total_count += count                        # output example: {'CGA': {'G/A': {'count': 10}}} - Triple nested dictionary
             
     # Calculating frequencies
+    total_count = int(round(total_count))                        # Checks if the total count is not a whole number
+    
     for triplet in freq:                                           # Iterates over the triplets in the dictionary               
-        for change in freq[triplet]:     #TODO This is unecessary since there should only be one change per triplet
+        for change in freq[triplet]:          #TODO This is unecessary since there should only be one change per triplet
             freq[triplet][change]['freq'] = freq[triplet][change]['count'] / total_count   # Calculates the frequency of the change and adds it to the dictionary
             
     return freq                           # output example: {'CGA': {'G/A': {'count': 10, 'freq': 0.1}}}

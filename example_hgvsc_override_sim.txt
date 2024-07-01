@@ -1,1 +1,0 @@
-python3 simulator_3.py -t example_transcript_list.txt -f test_signature.counts -d transcript_db -n 4 -r 2 -o tests/test_hgvsc_list.txt

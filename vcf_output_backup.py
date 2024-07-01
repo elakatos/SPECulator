@@ -64,10 +64,10 @@ def vcf_writer(data, output):
         "Y": "57227415",
     }
     
+    #valid_chromosomes = set([str(i) for i in range(1, 23)] + ['X', 'Y'])
+
     # Filter data to include only valid chromosomes
-    valid_chromosomes = set([str(i) for i in range(1, 23)] + ['X', 'Y'])
-    
-    filtered_data = {key: val for key, val in data.items() if val[0] in valid_chromosomes}
+    #filtered_data = {key: val for key, val in data.items() if val[0] in valid_chromosomes}
     
     # Prepare header lines for a new VCF writer
     header_lines = [
@@ -97,7 +97,7 @@ def vcf_writer(data, output):
     )
     
     # Add records to the VCF file
-    for key, (chrom, pos, ref, alt) in filtered_data.items():
+    for key, (chrom, pos, ref, alt) in data.items():
         # Assuming the type of substitution is SNV for single nucleotide variants
         alt_type = 'SNV' if len(ref) == 1 and len(alt) == 1 else 'MNV'  # Example types, adjust as necessary
         record = vcfpy.Record(
