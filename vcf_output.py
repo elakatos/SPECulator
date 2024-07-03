@@ -66,7 +66,6 @@ def vcf_writer(data, output):
     
     # Filter data to include only valid chromosomes
     valid_chromosomes = set([str(i) for i in range(1, 23)] + ['X', 'Y'])
-    
     filtered_data = {key: val for key, val in data.items() if val[0] in valid_chromosomes}
     
     # Prepare header lines for a new VCF writer
