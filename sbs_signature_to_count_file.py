@@ -22,6 +22,6 @@ def convert_sbs_to_count_file(input_file, output_file):
 
 # Convert SBS1 signature to a count file. 
 # Put output into 'sbs_signatures' folder
-input_file = 'SBS31_reference.txt'
-output_file = 'sbs_signatures/sbs31.count'
+input_file = 'SBS35_reference.txt'
+output_file = 'sbs_signatures/sbs35.count'
 convert_sbs_to_count_file(input_file, output_file)
