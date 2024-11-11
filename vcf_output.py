@@ -8,13 +8,7 @@ import re
 # TODO in main program:
 # TODO: Change output path to run folder
 
-# TODO in this file
-# TODO: Change name of simulator in vcf_output once decided.
-
 # TODO: Cleanup when done and create copy with examples
-# TODO: Readup on VCF
-# TODO: Understand code
-# TODO: Sort chrom?
 
 # Example input from converter (chrom, pos, ref, alt). Original
 #example = {
@@ -64,20 +58,17 @@ def vcf_writer(data, output):
         "Y": "57227415",
     }
     
-    # Filter data to include only valid chromosomes
+    # Filter data to include only canonical chromosomes
     valid_chromosomes = set([str(i) for i in range(1, 23)] + ['X', 'Y'])
     filtered_data = {key: val for key, val in data.items() if val[0] in valid_chromosomes}
     
     # Prepare header lines for a new VCF writer
     header_lines = [
         vcfpy.HeaderLine(key='fileformat', value='VCFv4.2'),                         
-        vcfpy.HeaderLine(key='source', value='SpecULATOR'),  # Change "MutationSimulator" to your program's name
-        # TODO: Change simulator to final name
-        
+        vcfpy.HeaderLine(key='source', value='SPECulator'),      
         # Automatically add contig lines for every unique chromosome sorted by numerical order and then lexicographical order for 'X', 'Y'.
-        # TODO: Not working properly. Sorts after 1 numbers (1 then 11 etc).
         *[
-            vcfpy.ContigHeaderLine.from_mapping({'ID': chrom, 'length': chromosome_lengths[chrom]})  # Replace '1' with actual length if known
+            vcfpy.ContigHeaderLine.from_mapping({'ID': chrom, 'length': chromosome_lengths[chrom]}) 
             for chrom in sorted(chromosome_lengths.keys(), key=chromosome_sort_key)
         ],
         
@@ -91,7 +82,7 @@ def vcf_writer(data, output):
         output,  
         vcfpy.Header(
             lines=header_lines,
-            samples=vcfpy.SamplesInfos(['SimulatedSample'])  # Correctly use SamplesInfos class
+            samples=vcfpy.SamplesInfos(['SimulatedSample'])
         )
     )
     
@@ -102,14 +93,14 @@ def vcf_writer(data, output):
         record = vcfpy.Record(
             CHROM=chrom,
             POS=int(pos),
-            ID='.',
+            ID=[key],
             REF=ref,
             ALT=[vcfpy.Substitution(type_=alt_type, value=alt)],
             QUAL='.',
             FILTER=['PASS'],  # Use 'PASS' to indicate the variant passed all filters, or '.' if no filtering was applied
             INFO={},
             FORMAT=['GT'],
-            calls=[vcfpy.Call(sample='SimulatedSample', data={'GT': '0/1'})]  # Assuming heterozygous for the example
+            calls=[vcfpy.Call(sample='SimulatedSample', data={'GT': '0/1'})]  # Using heterozygous as placeholder
         )
         writer.write_record(record)
         

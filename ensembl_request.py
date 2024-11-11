@@ -5,9 +5,6 @@ import requests
 import json
 import re
 
-
-# Test hgvs coding tests and extra print statements are included in the "ensembl_request_with_prints.py" file.
-
 # Takes the list of hgvs_coding if it contains more than 200 items and splits it into smaller lists.
 # Integrated into get_hgvs_genomic function
 def split_list(list, size):
@@ -74,29 +71,16 @@ def get_hgvs_genomic(hgvs_input, url, headers, batch_size):
                 for _, variant_data in allele.items():                       # Iterate over each dictionary in the list
                     if type(variant_data) == dict:                           # Errors saved as lists, hits saved as dictionaries.
                         
-                        # Iterate through each HGVS input to match with responses
-                        for j, hgvs in enumerate(sublist):
-                            base_hgvs_coding = hgvs.split(':')[0].split('.')[0]  # Extract transcript id
-                            mutation_detail = hgvs.split(':')[1]  # Extract mutation detail
-                            
-                            for variant in variant_data['hgvsc']:
-                                variant_transcript_id = variant.split(':')[0].split('.')[0]
-                                variant_mutation_detail = variant.split(':')[1]
-                                
-                                if base_hgvs_coding == variant_transcript_id and mutation_detail == variant_mutation_detail:
-                                    #print(f"Exact match found for: {hgvs}, adding: {variant_data['hgvsg'][0]}")
-                                    hgvs_genomic[hgvs] = variant_data['hgvsg'][0]
-                                    hgvs_failed.remove((index_map[hgvs], hgvs)) # Remove the matching HGVS coding
-                                    processed.add(hgvs)
-                                    # TODO: found_match only used for basic print. Elaborate or remove.
-                                    found_match = True
-                                    break                                       # Flag for matching HGVS coding
+                        if variant_data['input'] in sublist:                 
+                            j = sublist.index(variant_data['input'])         # Identify which input entry is this element
+                            hgvs_genomic[sublist[j]] = variant_data['hgvsg'][0]
+                            hgvs_failed.remove((index_map[sublist[j]], sublist[j]))
                                     
                     else:
                         print("Input contains errors.")
                         
-            if not found_match:
-                print("No matching HGVS coding found.")
+            #if not found_match:
+            #    print("No matching HGVS coding found.")
                 
         # Print error status code and message if the request failed
         else:
@@ -114,7 +98,7 @@ def hgvs_converter(hgvs_genomic):
     """
     
     chr_info = {}
-    pattern_genomic = re.compile(r'(\d{2})\..*\.(\d+)[ATCGU]')      # Patterns for chromosome number and locus
+    pattern_genomic = re.compile(r'NC_(\d+)(\d{2})\..*\.(\d+)[ATCGU]')      # Patterns for chromosome start string (NC), chrom. number and locus
     pattern_key = re.compile(r'([ATCGU])>([ATCGU])')                # Pattern for letters before and after ">"
     
     # Save chromosome and locus information
@@ -126,20 +110,20 @@ def hgvs_converter(hgvs_genomic):
         if match_genomic and match_coding:
             
             # Check if the chromosome is somatic, X or Y
-            if match_genomic.group(1) == "23":
+            if match_genomic.group(2) == "23":
                 chromosome = "X"
-            elif match_genomic.group(1) == "24":
+            elif match_genomic.group(2) == "24":
                 chromosome = "Y"
             else:
-                chromosome = match_genomic.group(1).lstrip("0")    # lstrip() removes the potential "0" from the first position.
+                chromosome = match_genomic.group(2).lstrip("0")    # lstrip() removes the potential "0" from the first position.
                 
             # Save information and append to the dictionary
-            locus = match_genomic.group(2)
+            locus = match_genomic.group(3)
             reference = match_coding.group(1)
             alternative = match_coding.group(2)
             chr_info[coding] = (chromosome, locus, reference, alternative)
         else:
-            print(f"No match found in: {genomic}")
+            print(f"Could not convert to standard genomic notation: {genomic}")
             
     return chr_info
 

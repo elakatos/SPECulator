@@ -1,1 +1,0 @@
-python3 simulator.py -c Proteincoding_processed_triplets.ensembl_cds/protein_coding_cds.ensembl.triplet_counts.pkl -f test_signature.counts -d transcript_db -n 10 -r 1
